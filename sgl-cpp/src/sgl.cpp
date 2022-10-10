@@ -8,7 +8,7 @@
 //---------------------------------------------------------------------------
 
 #include "sgl.h"
-#include "context.h"
+#include "config.h"
 
 /// Current error code.
 static sglEErrorCode _libStatus = SGL_NO_ERROR;
@@ -66,24 +66,28 @@ void sglFinish(void) {
 }
 
 int sglCreateContext(int width, int height) {
-  Context context();
+  Context c;
+  c.id = ContextArray.size();
+  c.width = width;
+  c.height = height;
+  ContextArray.push_back(c);
   return 0;
 }
 
 void sglDestroyContext(int id) {
-
+  //ContextArray.erase(id);
 }
 
 void sglSetContext(int id) {
-
+manager.currentContext = id;
 }
 
 int sglGetContext(void) {
-    return 0;
+    return ContextArray[manager.currentContext].id;
 }
 
 float *sglGetColorBufferPointer(void) {
-    return 0;
+  return ContextArray[manager.currentContext].color_buff;
 }
 
 //---------------------------------------------------------------------------
