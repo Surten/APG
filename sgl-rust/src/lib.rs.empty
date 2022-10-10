@@ -1,0 +1,285 @@
+use std::os::raw::{c_char, c_float, c_int};
+
+mod bindings {
+    #![allow(non_upper_case_globals)]
+    #![allow(non_camel_case_types)]
+    #![allow(non_snake_case)]
+    #![allow(unused)] // There is no `unused_constants`
+    include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+}
+use bindings::*;
+
+#[no_mangle]
+pub extern "C" fn sglGetError() -> sglEErrorCode::Type {
+    sglEErrorCode::SGL_NO_ERROR
+}
+
+#[no_mangle]
+pub extern "C" fn sglGetErrorString(_error: sglEErrorCode::Type) -> *const c_char {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglInit() {
+    println!("Hello from Rust");
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglFinish() {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglCreateContext(_width: c_int, _height: c_int) -> c_int {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglDestroyContext(_id: c_int) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglSetContext(_id: c_int) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglGetContext() -> c_int {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglGetColorBufferPointer() -> *mut c_float {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglClear(_what: sglEClearBit::Type) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglBegin(_mode: sglEElementType::Type) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglEnd() {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglVertex4f(_x: c_float, _y: c_float, _z: c_float, _w: c_float) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglVertex3f(_x: c_float, _y: c_float, _z: c_float) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglVertex2f(_x: c_float, _y: c_float) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglCircle(_x: c_float, _y: c_float, _z: c_float, _radius: c_float) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglEllipse(_x: c_float, _y: c_float, _z: c_float, _a: c_float, _b: c_float) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglArc(
+    _x: c_float,
+    _y: c_float,
+    _z: c_float,
+    _radius: c_float,
+    _from: c_float,
+    _to: c_float,
+) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglMatrixMode(_mode: sglEMatrixMode::Type) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglPushMatrix() {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglPopMatrix() {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglLoadIdentity() {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglLoadMatrix(_matrix: *const c_float) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglMultMatrix(_matrix: *const c_float) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglTranslate(_x: c_float, _y: c_float, _z: c_float) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglScale(_scale_x: c_float, _scale_y: c_float, _scale_z: c_float) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglRotate2D(_angle: c_float, _center_x: c_float, _center_y: c_float) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglRotateY(_angle: c_float) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglOrtho(
+    _left: c_float,
+    _right: c_float,
+    _bottom: c_float,
+    _top: c_float,
+    _near: c_float,
+    _far: c_float,
+) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglFrustum(
+    _left: c_float,
+    _right: c_float,
+    _bottom: c_float,
+    _top: c_float,
+    _near: c_float,
+    _far: c_float,
+) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglViewport(_x: c_int, _y: c_int, _width: c_int, _height: c_int) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglClearColor(_r: c_float, _g: c_float, _b: c_float, _a: c_float) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglColor3f(_r: c_float, _g: c_float, _b: c_float) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglAreaMode(_mode: sglEAreaMode::Type) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglPointSize(_size: c_float) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglEnable(_capabilities: sglEEnableFlags::Type) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglDisable(_capabilities: sglEEnableFlags::Type) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglBeginScene() {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglEndScene() {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglSphere(_x: c_float, _y: c_float, _z: c_float, _r: c_float) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglMaterial(
+    _r: c_float,
+    _g: c_float,
+    _b: c_float,
+    _diffuse: c_float,
+    _specular: c_float,
+    _shine: c_float,
+    _transmittance: c_float,
+    _refraction: c_float,
+) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglPointLight(
+    _x: c_float,
+    _y: c_float,
+    _z: c_float,
+    _r: c_float,
+    _g: c_float,
+    _b: c_float,
+) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglRayTraceScene() {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglRasterizeScene() {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglEmissiveMaterial(
+    _r: c_float,
+    _g: c_float,
+    _b: c_float,
+    _att_0: c_float,
+    _att_1: c_float,
+    _att_2: c_float,
+) {
+    todo!()
+}
+
+#[no_mangle]
+pub extern "C" fn sglEnvironmentMap(_width: c_int, _height: c_int, _texels: *mut c_float) {
+    todo!()
+}

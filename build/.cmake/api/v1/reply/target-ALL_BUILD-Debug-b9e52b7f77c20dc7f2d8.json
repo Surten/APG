@@ -1,0 +1,36 @@
+{
+	"backtrace" : 0,
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : 
+		[
+			"sgl-cpp/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			}
+		]
+	},
+	"dependencies" : 
+	[
+		{
+			"id" : "ZERO_CHECK::@6890427a1f51a3e7e1df"
+		},
+		{
+			"id" : "sgl::@a96e19b0dac92bef53f4"
+		}
+	],
+	"id" : "ALL_BUILD::@a96e19b0dac92bef53f4",
+	"isGeneratorProvided" : true,
+	"name" : "ALL_BUILD",
+	"paths" : 
+	{
+		"build" : "sgl-cpp",
+		"source" : "sgl-cpp"
+	},
+	"sources" : [],
+	"type" : "UTILITY"
+}

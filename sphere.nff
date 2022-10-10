@@ -1,0 +1,18 @@
+# background color
+b 1 1 1
+
+#camera specification
+v
+from  0 0 2.6131259
+at    0 0 0
+up    0 1 0
+angle 45
+hither 0.1
+resolution 512 512
+
+#light source
+l 2 3 5
+
+#Right wall - green
+f 0.4 0.2 1  1 0.8 60 0 1
+s 0 0 0 1

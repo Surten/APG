@@ -1,0 +1,7 @@
+C:/Users/bacikjos/Desktop/sgl+testapp/build/CMakeFiles/testapp.dir
+C:/Users/bacikjos/Desktop/sgl+testapp/build/CMakeFiles/INSTALL.dir
+C:/Users/bacikjos/Desktop/sgl+testapp/build/CMakeFiles/ALL_BUILD.dir
+C:/Users/bacikjos/Desktop/sgl+testapp/build/CMakeFiles/ZERO_CHECK.dir
+C:/Users/bacikjos/Desktop/sgl+testapp/build/sgl-cpp/CMakeFiles/sgl.dir
+C:/Users/bacikjos/Desktop/sgl+testapp/build/sgl-cpp/CMakeFiles/INSTALL.dir
+C:/Users/bacikjos/Desktop/sgl+testapp/build/sgl-cpp/CMakeFiles/ALL_BUILD.dir
