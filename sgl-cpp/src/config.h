@@ -15,6 +15,7 @@ public:
 	float* vertex_buff;
 	int width;
 	int height;
+	float clearColor[4];
 };
 
 

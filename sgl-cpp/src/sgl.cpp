@@ -70,12 +70,14 @@ int sglCreateContext(int width, int height) {
   c.id = ContextArray.size();
   c.width = width;
   c.height = height;
+  c.vertex_buff = (float*)malloc(3*sizeof(float)*100);
+  c.color_buff = (float*)malloc(3*sizeof(float)*width*height);
   ContextArray.push_back(c);
-  return 0;
+  return c.id;
 }
 
 void sglDestroyContext(int id) {
-  //ContextArray.erase(id);
+  //ContextArray[id];
 }
 
 void sglSetContext(int id) {
@@ -94,9 +96,16 @@ float *sglGetColorBufferPointer(void) {
 // Drawing functions
 //---------------------------------------------------------------------------
 
-void sglClearColor(float r, float g, float b, float alpha) {}
+void sglClearColor(float r, float g, float b, float alpha) {
+  ContextArray[manager.currentContext].clearColor[0] = r;
+  ContextArray[manager.currentContext].clearColor[1] = g;
+  ContextArray[manager.currentContext].clearColor[2] = b;
+  ContextArray[manager.currentContext].clearColor[3] = alpha;
+}
 
-void sglClear(unsigned what) {}
+void sglClear(unsigned what) {
+//  ContextArray[manager.currentContext].color_buff
+}
 
 void sglBegin(sglEElementType mode) {}
 
@@ -106,7 +115,9 @@ void sglVertex4f(float x, float y, float z, float w) {}
 
 void sglVertex3f(float x, float y, float z) {}
 
-void sglVertex2f(float x, float y) {}
+void sglVertex2f(float x, float y) {
+
+}
 
 void sglCircle(float x, float y, float z, float radius) {}
 
