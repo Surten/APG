@@ -8,7 +8,7 @@
 //---------------------------------------------------------------------------
 
 #include "sgl.h"
-#include "config.h"
+#include "context.h"
 
 /// Current error code.
 static sglEErrorCode _libStatus = SGL_NO_ERROR;
@@ -68,10 +68,10 @@ void sglFinish(void) {
 int sglCreateContext(int width, int height) {
   Context c;
   c.id = ContextArray.size();
-  c.width = width;
-  c.height = height;
-  c.vertex_buff = (float*)malloc(3*sizeof(float)*100);
-  c.color_buff = (float*)malloc(3*sizeof(float)*width*height);
+  c.frameWidth = width;
+  c.frameHeight = height;
+
+  c.color_buffer = (float*)malloc(3*sizeof(float)*width*height);
   ContextArray.push_back(c);
   return c.id;
 }
@@ -81,15 +81,15 @@ void sglDestroyContext(int id) {
 }
 
 void sglSetContext(int id) {
-manager.currentContext = id;
+  ConActive = &ContextArray.at(id);
 }
 
 int sglGetContext(void) {
-    return ContextArray[manager.currentContext].id;
+    return ConActive->id;
 }
 
 float *sglGetColorBufferPointer(void) {
-  return ContextArray[manager.currentContext].color_buff;
+  return ConActive->color_buffer;
 }
 
 //---------------------------------------------------------------------------
@@ -97,26 +97,32 @@ float *sglGetColorBufferPointer(void) {
 //---------------------------------------------------------------------------
 
 void sglClearColor(float r, float g, float b, float alpha) {
-  ContextArray[manager.currentContext].clearColor[0] = r;
-  ContextArray[manager.currentContext].clearColor[1] = g;
-  ContextArray[manager.currentContext].clearColor[2] = b;
-  ContextArray[manager.currentContext].clearColor[3] = alpha;
+  ConActive->clearColor[0] = r;
+  ConActive->clearColor[1] = g;
+  ConActive->clearColor[2] = b;
+  ConActive->clearColor[3] = alpha;
 }
 
 void sglClear(unsigned what) {
 //  ContextArray[manager.currentContext].color_buff
 }
 
-void sglBegin(sglEElementType mode) {}
+void sglBegin(sglEElementType mode) {
+  ConActive->EleType = mode;
+}
 
 void sglEnd(void) {}
 
-void sglVertex4f(float x, float y, float z, float w) {}
+void sglVertex4f(float x, float y, float z, float w) {
+  //ConActive->vbo;
+}
 
-void sglVertex3f(float x, float y, float z) {}
+void sglVertex3f(float x, float y, float z) {
+  sglVertex4f(x,y,z,1);
+}
 
 void sglVertex2f(float x, float y) {
-
+  sglVertex4f(x,y,0,1);
 }
 
 void sglCircle(float x, float y, float z, float radius) {}
