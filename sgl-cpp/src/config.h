@@ -20,6 +20,7 @@ public:
 
 struct Manager{
 	int currentContext = 0;
+	
 };
 Manager manager;
 

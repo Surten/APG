@@ -425,6 +425,11 @@ void sglArc(float x, float y, float z, float radius, float from, float to);
     No context has been allocated yet or sglMatrixMode() is called within a
     sglBegin() / sglEnd() sequence.
  */
+
+void sglLine(float x_beggin,float y_beggin,float x_end,float y_end);
+
+void sglPoint(float x,float y);
+
 void sglMatrixMode(sglEMatrixMode mode);
 
 /// Matrix storage on a stack.

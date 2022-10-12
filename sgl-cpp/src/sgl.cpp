@@ -114,6 +114,13 @@ void sglEllipse(float x, float y, float z, float a, float b) {}
 
 void sglArc(float x, float y, float z, float radius, float from, float to) {}
 
+void sglLine(float x_beggin,float y_beggin,float x_end,float y_end){
+
+}
+
+void sglPoint(float x,float y){
+  
+}
 //---------------------------------------------------------------------------
 // Transform functions
 //---------------------------------------------------------------------------
