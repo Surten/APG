@@ -77,7 +77,7 @@ int sglCreateContext(int width, int height) {
 }
 
 void sglDestroyContext(int id) {
-  //ContextArray[id];
+  //ContextArray[id] = NULL;
 }
 
 void sglSetContext(int id) {
@@ -111,10 +111,52 @@ void sglBegin(sglEElementType mode) {
   ConActive->EleType = mode;
 }
 
-void sglEnd(void) {}
+void sglEnd(void) {
+
+
+
+
+  switch (ConActive->EleType)
+  {
+  case SGL_POINTS:
+    /* code */
+    break;
+
+  case SGL_LINES:
+    /* code */
+    break;
+
+  case SGL_LINE_STRIP:
+    /* code */
+    break;
+
+  case SGL_LINE_LOOP:
+    /* code */
+    break;
+
+  case SGL_TRIANGLES:
+    /* code */
+    break;
+
+  case SGL_POLYGON:
+    /* code */
+    break;
+
+  case SGL_AREA_LIGHT:
+    /* code */
+    break;
+
+  case SGL_LAST_ELEMENT_TYPE:
+    /* code */
+    break;
+  
+  default:
+    break;
+  }
+}
 
 void sglVertex4f(float x, float y, float z, float w) {
-  //ConActive->vbo;
+  ConActive->vbo.InsertVertex(x,y,z,w);
 }
 
 void sglVertex3f(float x, float y, float z) {
@@ -135,9 +177,13 @@ void sglArc(float x, float y, float z, float radius, float from, float to) {}
 // Transform functions
 //---------------------------------------------------------------------------
 
-void sglMatrixMode(sglEMatrixMode mode) {}
+void sglMatrixMode(sglEMatrixMode mode) {
+  ConActive->MatrixMode = mode;
+}
 
-void sglPushMatrix(void) {}
+void sglPushMatrix(void) {
+
+}
 
 void sglPopMatrix(void) {}
 
@@ -145,7 +191,9 @@ void sglLoadIdentity(void) {}
 
 void sglLoadMatrix(const float *matrix) {}
 
-void sglMultMatrix(const float *matrix) {}
+void sglMultMatrix(const float *matrix) {
+  
+}
 
 void sglTranslate(float x, float y, float z) {}
 
@@ -165,13 +213,19 @@ void sglViewport(int x, int y, int width, int height) {}
 // Attribute functions
 //---------------------------------------------------------------------------
 
-void sglColor3f(float r, float g, float b) {}
+void sglColor3f(float r, float g, float b) {
+  ConActive->currentColor[0] = r;
+  ConActive->currentColor[1] = g;
+  ConActive->currentColor[2] = b;
+}
 
 void sglAreaMode(sglEAreaMode mode) {}
 
 void sglPointSize(float size) {}
 
-void sglEnable(sglEEnableFlags cap) {}
+void sglEnable(sglEEnableFlags cap) {
+  ConActive->flags = cap;
+}
 
 void sglDisable(sglEEnableFlags cap) {}
 

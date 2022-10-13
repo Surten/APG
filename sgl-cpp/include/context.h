@@ -4,6 +4,7 @@
 #include <vector>
 #include "sgl.h"
 #include "VBO.h"
+#include "Matrix4f.h"
 
 
 ///Pixel structure, float triplet r,g,b and it's index (after 2D->1D transformation)
@@ -20,7 +21,17 @@ public:
 	float clearColor[4];
 	sglEElementType EleType; 
 	VBO vbo;
+	sglEMatrixMode MatrixMode;
+	sglEEnableFlags flags;
 
+	//Matrix4f * modelViewStack;
+	//Matrix4f * projectionStack;
+
+	//void MatrixPush();
+	//void MatrixPop();
+
+	Context();
+	~Context();
 };
 
 
