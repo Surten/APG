@@ -30,8 +30,8 @@ public:
 	MatrixLinkedList modelViewStack;
 	MatrixLinkedList projectionStack;
 
-	Context(){}
-	~Context(){}
+	Context(int idd, int width, int heigth);
+	~Context();
 
 	void MatrixMultVector(Matrix4f& m, float& x, float& y, float& z, float& w);
 

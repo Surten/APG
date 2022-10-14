@@ -76,13 +76,7 @@ void sglFinish(void) {
 }
 
 int sglCreateContext(int width, int height) {
-  Context c;
-  c.id = (int)ContextArray.size();
-  c.frameWidth = width;
-  c.frameHeight = height;
-
-  c.colorBufferSize = height*width*3;
-  c.color_buffer = new float[sizeof(float) * c.colorBufferSize];
+  Context c((int)ContextArray.size(), width, height);
   ContextArray.push_back(c);
   return c.id;
 }
@@ -95,7 +89,11 @@ void sglDestroyContext(int id) {
 }
 
 void sglSetContext(int id) {
-  ConActive = &ContextArray.at(id);
+  
+  for (size_t i = 0; i < ContextArray.size(); i++)
+  {
+    if(ContextArray.at(i).id == id) ConActive = &ContextArray.at(i);
+  }
 }
 
 int sglGetContext(void) {
@@ -138,16 +136,24 @@ void sglClear(unsigned what) {
 
 void sglBegin(sglEElementType mode) {
   ConActive->EleType = mode;
-}
 
+}
 void sglEnd(void) {
-  for (size_t i = 0; i < ConActive->vbo.GetSize(); i+=4)
+  VBO *v = &ConActive->vbo;
+
+  
+  for (size_t i = 0; i < v->GetSize(); i+=4)
   {
-    ConActive->VertexShader(ConActive->vbo.vertex_buffer.at(i), ConActive->vbo.vertex_buffer.at(i+1),
-          ConActive->vbo.vertex_buffer.at(i+2), ConActive->vbo.vertex_buffer.at(i+3));
-    ConActive->PerspectiveDivision(ConActive->vbo.vertex_buffer.at(i), ConActive->vbo.vertex_buffer.at(i+1),
-          ConActive->vbo.vertex_buffer.at(i+2), ConActive->vbo.vertex_buffer.at(i+3));
-    ConActive->ViewPortTransform(ConActive->vbo.vertex_buffer.at(i), ConActive->vbo.vertex_buffer.at(i+1));
+    //std::cout << v->vertex_buffer.at(i) << " " << v->vertex_buffer.at(i+1) << " " << v->vertex_buffer.at(i+2) << " " << v->vertex_buffer.at(i+3) << std::endl;
+    ConActive->VertexShader(v->vertex_buffer.at(i), v->vertex_buffer.at(i+1),
+          v->vertex_buffer.at(i+2), v->vertex_buffer.at(i+3));
+    //std::cout << v->vertex_buffer.at(i) << " " << v->vertex_buffer.at(i+1) << " " << v->vertex_buffer.at(i+2) << " " << v->vertex_buffer.at(i+3) << std::endl;
+    ConActive->PerspectiveDivision(v->vertex_buffer.at(i), v->vertex_buffer.at(i+1),
+          v->vertex_buffer.at(i+2), v->vertex_buffer.at(i+3));
+        //std::cout << v->vertex_buffer.at(i) << " " << v->vertex_buffer.at(i+1) << " " << v->vertex_buffer.at(i+2) << " " << v->vertex_buffer.at(i+3) << std::endl;
+    ConActive->ViewPortTransform(v->vertex_buffer.at(i), v->vertex_buffer.at(i+1));
+        //std::cout << v->vertex_buffer.at(i) << " " << v->vertex_buffer.at(i+1) << " " << v->vertex_buffer.at(i+2) << " " << v->vertex_buffer.at(i+3) << std::endl;
+       
   }
 
   Rasterizer rasterizer(ConActive);
@@ -155,31 +161,49 @@ void sglEnd(void) {
   switch (ConActive->EleType)
   {
   case SGL_POINTS:
-  for (size_t i = 0; i < ConActive->vbo.GetSize(); i += 4)
-  {
-    rasterizer.DrawPoint((int)ConActive->vbo.vertex_buffer.at(i), (int)ConActive->vbo.vertex_buffer.at(i+1));
-  }
+    //ConActive->modelViewStack.top->PrintMatrix();
+    for (size_t i = 0; i < v->GetSize(); i += 4)
+    {
+      rasterizer.DrawPoint((int)v->vertex_buffer.at(i), (int)v->vertex_buffer.at(i+1));
+      //std::cout << v->GetSize() << " " << v->vertex_buffer.at(i) << " " << v->vertex_buffer.at(i+1) << std::endl;
 
+    }
     break;
 
   case SGL_LINES:
-    for (size_t i = 0; i < ConActive->vbo.GetSize(); i += 8)
-      {
-        rasterizer.DrawLine((int)ConActive->vbo.vertex_buffer.at(i), (int)ConActive->vbo.vertex_buffer.at(i+1),
-            (int)ConActive->vbo.vertex_buffer.at(i+4), (int)ConActive->vbo.vertex_buffer.at(i+5));
-      }
+    for (size_t i = 0; i < v->GetSize(); i += 8)
+    {
+      rasterizer.DrawLine((int)v->vertex_buffer.at(i), (int)v->vertex_buffer.at(i+1),
+          (int)v->vertex_buffer.at(i+4), (int)v->vertex_buffer.at(i+5));
+    }
     break;
 
   case SGL_LINE_STRIP:
-    /* code */
+      for (size_t i = 0; i < v->GetSize()-4; i += 4)
+      {
+        rasterizer.DrawLine((int)v->vertex_buffer.at(i), (int)v->vertex_buffer.at(i+1),
+            (int)v->vertex_buffer.at(i+4), (int)v->vertex_buffer.at(i+5));
+      }
     break;
 
   case SGL_LINE_LOOP:
-    /* code */
+    for (size_t i = 0; i < v->GetSize()-4; i += 4)
+    {
+      rasterizer.DrawLine((int)v->vertex_buffer.at(i), (int)v->vertex_buffer.at(i+1),
+          (int)v->vertex_buffer.at(i+4), (int)v->vertex_buffer.at(i+5));
+    }
+    rasterizer.DrawLine((int)v->vertex_buffer.at(v->GetSize()-4), (int)v->vertex_buffer.at(v->GetSize()-3),
+          (int)v->vertex_buffer.at(0), (int)v->vertex_buffer.at(1));
     break;
 
   case SGL_TRIANGLES:
-    /* code */
+      for (size_t i = 0; i < v->GetSize(); i += 12)
+      {
+        rasterizer.DrawTriangle(
+            (int)v->vertex_buffer.at(i), (int)v->vertex_buffer.at(i+1),
+            (int)v->vertex_buffer.at(i+4), (int)v->vertex_buffer.at(i+5),
+            (int)v->vertex_buffer.at(i+8), (int)v->vertex_buffer.at(i+9));
+      }
     break;
 
   case SGL_POLYGON:
@@ -197,6 +221,7 @@ void sglEnd(void) {
   default:
     break;
   }
+  v->ClearVBO();
 }
 
 void sglVertex4f(float x, float y, float z, float w) {
@@ -211,7 +236,9 @@ void sglVertex2f(float x, float y) {
   sglVertex4f(x,y,0,1);
 }
 
-void sglCircle(float x, float y, float z, float radius) {}
+void sglCircle(float x, float y, float z, float radius) {
+
+}
 
 void sglEllipse(float x, float y, float z, float a, float b) {}
 
@@ -231,13 +258,14 @@ void sglPushMatrix(void) {
   switch (ConActive->MatrixMode)
   {
   case SGL_MODELVIEW:
-    memcpy(m,ConActive->modelViewStack.top->matrix,sizeof(float)*16);
+
+    std::copy(ConActive->modelViewStack.top->matrix,ConActive->modelViewStack.top->matrix+16,m);
     mat.InsertMatrix(m);
     ConActive->modelViewStack.Push(mat);
     break;
 
   case SGL_PROJECTION:
-    memcpy(m,ConActive->projectionStack.top->matrix,sizeof(float)*16);
+std::copy(ConActive->projectionStack.top->matrix,ConActive->projectionStack.top->matrix+16,m);
     mat.InsertMatrix(m);
     ConActive->projectionStack.Push(mat);
     break;
@@ -266,11 +294,11 @@ void sglLoadIdentity(void) {
   switch (ConActive->MatrixMode)
   {
   case SGL_MODELVIEW:
-    memcpy(ConActive->modelViewStack.top->matrix,mat,sizeof(float)*16);
+    std::copy(mat,mat+16,ConActive->modelViewStack.top->matrix);
     break;
 
   case SGL_PROJECTION:
-    memcpy(ConActive->modelViewStack.top->matrix,mat,sizeof(float)*16);
+    std::copy(mat,mat+16,ConActive->projectionStack.top->matrix);
     break;
   }
 }
@@ -280,11 +308,11 @@ void sglLoadMatrix(const float *matrix) {
   switch (ConActive->MatrixMode)
   {
   case SGL_MODELVIEW:
-    memcpy(ConActive->modelViewStack.top->matrix,matrix,sizeof(float)*16);
+    std::copy(matrix,matrix+16,ConActive->modelViewStack.top->matrix);
     break;
 
   case SGL_PROJECTION:
-    memcpy(ConActive->modelViewStack.top->matrix,matrix,sizeof(float)*16);
+    std::copy(matrix,matrix+16,ConActive->projectionStack.top->matrix);
     break;
   }
 }
@@ -292,7 +320,7 @@ void sglLoadMatrix(const float *matrix) {
 void sglMultMatrix(const float *matrix) {
   Matrix4f m;
   float temp[16];
-  memcpy(temp,matrix,sizeof(float)*16);
+  std::copy(matrix,matrix+16,temp);
   m.InsertMatrix(temp);
   switch (ConActive->MatrixMode)
   {
@@ -349,18 +377,27 @@ void sglScale(float scalex, float scaley, float scalez) {
 }
 
 void sglRotate2D(float angle, float centerx, float centery) {
+  /*
+  sglTranslate(centerx, centery, 0);
+  float mat[16] = {cos(angle), -sin(angle), 0, 0,
+                   sin(angle), cos(angle) , 0, 0,
+                   0         , 0          , 1, 0,
+                   0         , 0          , 0, 1 };
+  Matrix4f m;
+  memcpy(m.matrix, mat, sizeof(float)*16);
+  switch (ConActive->MatrixMode)
+  {
+  case SGL_MODELVIEW:
+    ConActive->modelViewStack.MultiplyFromLeft(m);
+    break;
 
+  case SGL_PROJECTION:
+    ConActive->projectionStack.MultiplyFromLeft(m);
+    break;
+  }
 
-
-
-
-
-
-
-
-
-
-
+  sglTranslate(-centerx, -centery, 0);
+*/
 }
 
 void sglRotateY(float angle) {
@@ -369,7 +406,7 @@ void sglRotateY(float angle) {
                    sin(angle), 0, cos(angle) , 0,
                    0,          0, 0,           1 };
   Matrix4f m;
-  memcpy(m.matrix, mat, sizeof(float)*16);
+  std::copy(mat,mat+16, m.matrix);
   switch (ConActive->MatrixMode)
   {
   case SGL_MODELVIEW:
@@ -405,7 +442,33 @@ void sglOrtho(float left, float right, float bottom, float top, float near, floa
   }
 }
 
-void sglFrustum(float left, float right, float bottom, float top, float near, float far) {}
+void sglFrustum(float left, float right, float bottom, float top, float near, float far) {
+  Matrix4f orthoMat;
+  orthoMat.matrix[0] = (2 * near)/(right - left);
+  orthoMat.matrix[5] = (2 * near)/(top - bottom);
+
+
+  orthoMat.matrix[2] =((right + left) / (right - left));
+  orthoMat.matrix[6] =((top + bottom) / (top - bottom));
+  orthoMat.matrix[10] =-((far + near) / (far - near));
+
+  orthoMat.matrix[11] = -(2 * far * near)/(far - near);
+
+  orthoMat.matrix[14] = -1;
+  orthoMat.matrix[15] = 0;
+
+
+  switch (ConActive->MatrixMode)
+  {
+  case SGL_MODELVIEW:
+    ConActive->modelViewStack.MultiplyFromRight(orthoMat);
+    break;
+
+  case SGL_PROJECTION:
+    ConActive->projectionStack.MultiplyFromRight(orthoMat);
+    break;
+  }
+}
 
 void sglViewport(int x, int y, int width, int height) {
   ConActive->viewport.x = x;

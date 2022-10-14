@@ -2,11 +2,15 @@
 
 void VBO::InsertVertex(float x, float y, float z, float w)
 {
-    vertex_buffer.push_back(x);
-    vertex_buffer.push_back(y);
-    vertex_buffer.push_back(z);
-    vertex_buffer.push_back(w);
-    currIndex += 4;
+    if(allocated < currIndex+8){
+        allocated = allocated*5;
+        vertex_buffer.resize(allocated, 0);
+    }
+    vertex_buffer.at(currIndex++) = x;
+    vertex_buffer.at(currIndex++) = y;
+    vertex_buffer.at(currIndex++) = z;
+    vertex_buffer.at(currIndex++) = w;
+    //currIndex += 4;
 
 }
 
@@ -20,6 +24,8 @@ size_t VBO::GetSize(){
     return currIndex;
 }
 
-VBO::VBO(){}
+VBO::VBO(){
+    vertex_buffer.resize(allocated, 0);
+}
 VBO::~VBO(){}
 

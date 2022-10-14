@@ -9,8 +9,8 @@
 
 /// uncomment the tests you wish to run
 
-#define TEST0
-//#define TEST1
+//#define TEST0
+#define TEST1
 //#define TEST2
 //#define TEST3
 //#define TEST4

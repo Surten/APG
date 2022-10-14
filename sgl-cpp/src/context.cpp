@@ -1,5 +1,13 @@
 #include "context.h"
 
+Context::Context(int idd, int width, int heigth) : id(idd), frameWidth(width), frameHeight(heigth)
+{
+	colorBufferSize = heigth*width*3;
+ 	color_buffer = new float[colorBufferSize];
+}
+
+Context::~Context(){}
+
 
 void Context::MatrixMultVector(Matrix4f& m, float& x, float& y, float& z, float& w){
 	float xx,yy,zz,ww;
@@ -35,3 +43,5 @@ void Context::ViewPortTransform(float& x, float& y){
 	y=yy;
 
 }
+
+

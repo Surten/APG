@@ -1,12 +1,11 @@
 #ifndef _MATRIX_H_
 #define _MATRIX_H_
-
+#include <iostream>
 class Matrix4f{
 
 public:
     float matrix[16];
-    Matrix4f* next;
-    Matrix4f* previous;
+    Matrix4f* next = nullptr;
     Matrix4f();
     ~Matrix4f();
     
@@ -14,6 +13,7 @@ public:
     void InsertMainDiagonal(float a, float b, float c, float d);
     void InsertColumn(int column, float a, float b, float c, float d);
     void InsertRow(int row, float a, float b, float c, float d);
+    void PrintMatrix();
     
     void InsertMatrix(float m[]);
     Matrix4f Matrix4f::operator* (const Matrix4f& m1);
