@@ -9,6 +9,7 @@
 
 #include "sgl.h"
 #include "context.h"
+#include "Rasterizer.h"
 
 #include <cmath>
 
