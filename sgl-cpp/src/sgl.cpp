@@ -12,8 +12,6 @@
 
 #include <cmath>
 
-
-
 Context* ConActive = nullptr;
 std::vector<Context> ContextArray;
 /// Current error code.
@@ -151,7 +149,7 @@ void sglEnd(void) {
     ConActive->ViewPortTransform(ConActive->vbo.vertex_buffer.at(i), ConActive->vbo.vertex_buffer.at(i+1));
   }
 
-  Rasterizer rasterizer;
+  Rasterizer rasterizer(ConActive);
 
   switch (ConActive->EleType)
   {
