@@ -11,6 +11,8 @@ public:
     void InsertMainDiagonal(float a, float b, float c, float d);
     void InsertColumn(int column, float a, float b, float c, float d);
     void InsertRow(int row, float a, float b, float c, float d);
+    
+    Matrix4f& Matrix4f::operator* (const Matrix4f& m1);
 
 
 };
@@ -30,6 +32,24 @@ public:
     ~MatrixLinkedList();
 
 };
+
+Matrix4f& Matrix4f::operator* (const Matrix4f& m1){
+    Matrix4f ret;
+    float sum;
+    for (size_t i = 0; i < 4; i++)
+    {
+        for (size_t j = 0; j < 4; j++)
+        {
+           sum = 0;
+           for (size_t k = 0; k < 4; k++)
+            {
+                sum += this->matrix[i*4+k] * m1.matrix[j+k*4];
+            }
+            ret.matrix[i*4+j] = sum;
+        }   
+    }
+    return ret;
+}
 
 MatrixLinkedList::MatrixLinkedList(){
     Matrix4f mat;

@@ -116,8 +116,15 @@ void sglBegin(sglEElementType mode) {
 }
 
 void sglEnd(void) {
-
-
+  for (size_t i = 0; i < ConActive->vbo.GetSize(); i+=4)
+  {
+    ConActive->VertexShader(ConActive->vbo.vertex_buffer.at(i), ConActive->vbo.vertex_buffer.at(i+1),
+          ConActive->vbo.vertex_buffer.at(i+2), ConActive->vbo.vertex_buffer.at(i+3));
+    ConActive->PerspectiveDivision(ConActive->vbo.vertex_buffer.at(i), ConActive->vbo.vertex_buffer.at(i+1),
+          ConActive->vbo.vertex_buffer.at(i+2), ConActive->vbo.vertex_buffer.at(i+3));
+    ConActive->ViewPortTransform(ConActive->vbo.vertex_buffer.at(i), ConActive->vbo.vertex_buffer.at(i+1));
+  }
+  
 
 
   switch (ConActive->EleType)
@@ -338,9 +345,10 @@ void sglOrtho(float left, float right, float bottom, float top, float near, floa
 void sglFrustum(float left, float right, float bottom, float top, float near, float far) {}
 
 void sglViewport(int x, int y, int width, int height) {
-
-  //x_w = (x_nd + 1) * width/2  + x
-  //y_w = (y_nd + 1) * height/2 + y
+  ConActive->viewport.x = x;
+  ConActive->viewport.y = y;
+  ConActive->viewport.width = width;
+  ConActive->viewport.height = height;
 }
 
 //---------------------------------------------------------------------------
