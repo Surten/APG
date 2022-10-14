@@ -9,8 +9,8 @@ void Rasterizer::DrawPoint(int x, int y){
     //in the correct place put ConActive->currentColor
     
     Con->color_buffer[3*(y*Con->frameWidth + x)] = Con->currentColor[0];
-    Con->color_buffer[3*(y*Con->frameWidth + x + 1)] = Con->currentColor[1];
-    Con->color_buffer[3*(y*Con->frameWidth + x + 2)] = Con->currentColor[2];
+    Con->color_buffer[3*(y*Con->frameWidth + x) + 1] = Con->currentColor[1];
+    Con->color_buffer[3*(y*Con->frameWidth + x) + 2] = Con->currentColor[2];
     
 }
 
