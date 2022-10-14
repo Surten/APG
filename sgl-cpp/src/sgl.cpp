@@ -124,17 +124,25 @@ void sglEnd(void) {
           ConActive->vbo.vertex_buffer.at(i+2), ConActive->vbo.vertex_buffer.at(i+3));
     ConActive->ViewPortTransform(ConActive->vbo.vertex_buffer.at(i), ConActive->vbo.vertex_buffer.at(i+1));
   }
-  
 
+  Rasterizer rasterizer;
 
   switch (ConActive->EleType)
   {
   case SGL_POINTS:
-    /* code */
+  for (size_t i = 0; i < ConActive->vbo.GetSize(); i += 4)
+  {
+    rasterizer.DrawPoint(ConActive->vbo.vertex_buffer.at(i), ConActive->vbo.vertex_buffer.at(i+1));
+  }
+
     break;
 
   case SGL_LINES:
-    /* code */
+    for (size_t i = 0; i < ConActive->vbo.GetSize(); i += 8)
+      {
+        rasterizer.DrawLine(ConActive->vbo.vertex_buffer.at(i), ConActive->vbo.vertex_buffer.at(i+1),
+            ConActive->vbo.vertex_buffer.at(i+4), ConActive->vbo.vertex_buffer.at(i+5));
+      }
     break;
 
   case SGL_LINE_STRIP:

@@ -5,6 +5,7 @@
 #include "sgl.h"
 #include "VBO.h"
 #include "Matrix4f.h"
+#include "Rasterizer.h"
 
 
 ///Pixel structure, float triplet r,g,b and it's index (after 2D->1D transformation)
@@ -17,7 +18,7 @@ public:
 	float* color_buffer;
 	int frameWidth;
 	int frameHeight;
-	float currentColor[4];
+	float currentColor[3];
 	float clearColor[4];
 	sglEElementType EleType; 
 	VBO vbo;
