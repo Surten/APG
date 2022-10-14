@@ -10,6 +10,12 @@
 #include "sgl.h"
 #include "context.h"
 
+#include <cmath>
+
+
+
+Context* ConActive = nullptr;
+std::vector<Context> ContextArray;
 /// Current error code.
 static sglEErrorCode _libStatus = SGL_NO_ERROR;
 
@@ -64,15 +70,20 @@ void sglInit(void) {
 void sglFinish(void) {
   //~init
   //free memory
+  for(Context c : ContextArray){
+    delete c.color_buffer;
+  }
+  
 }
 
 int sglCreateContext(int width, int height) {
   Context c;
-  c.id = ContextArray.size();
+  c.id = (int)ContextArray.size();
   c.frameWidth = width;
   c.frameHeight = height;
 
-  c.color_buffer = (float*)malloc(3*sizeof(float)*width*height);
+  c.colorBufferSize = height*width*3;
+  c.color_buffer = new float[sizeof(float) * c.colorBufferSize];
   ContextArray.push_back(c);
   return c.id;
 }
@@ -104,11 +115,26 @@ void sglClearColor(float r, float g, float b, float alpha) {
   ConActive->clearColor[0] = r;
   ConActive->clearColor[1] = g;
   ConActive->clearColor[2] = b;
-  ConActive->clearColor[3] = alpha;
+  //ConActive->clearColor[3] = alpha;
 }
 
 void sglClear(unsigned what) {
-//  ContextArray[manager.currentContext].color_buff
+    switch (what)
+    {
+    case SGL_COLOR_BUFFER_BIT:
+      for (size_t i = 0; i < ConActive->colorBufferSize; i+=3)
+      {
+        ConActive->color_buffer[i] = ConActive->clearColor[0];
+        ConActive->color_buffer[i+1] = ConActive->clearColor[1];
+        ConActive->color_buffer[i+2] = ConActive->clearColor[2];
+      }
+      break;
+    
+    case SGL_DEPTH_BUFFER_BIT:
+      break;
+    default:
+      break;
+    }
 }
 
 void sglBegin(sglEElementType mode) {
@@ -132,7 +158,7 @@ void sglEnd(void) {
   case SGL_POINTS:
   for (size_t i = 0; i < ConActive->vbo.GetSize(); i += 4)
   {
-    rasterizer.DrawPoint(ConActive->vbo.vertex_buffer.at(i), ConActive->vbo.vertex_buffer.at(i+1));
+    rasterizer.DrawPoint((int)ConActive->vbo.vertex_buffer.at(i), (int)ConActive->vbo.vertex_buffer.at(i+1));
   }
 
     break;
@@ -140,8 +166,8 @@ void sglEnd(void) {
   case SGL_LINES:
     for (size_t i = 0; i < ConActive->vbo.GetSize(); i += 8)
       {
-        rasterizer.DrawLine(ConActive->vbo.vertex_buffer.at(i), ConActive->vbo.vertex_buffer.at(i+1),
-            ConActive->vbo.vertex_buffer.at(i+4), ConActive->vbo.vertex_buffer.at(i+5));
+        rasterizer.DrawLine((int)ConActive->vbo.vertex_buffer.at(i), (int)ConActive->vbo.vertex_buffer.at(i+1),
+            (int)ConActive->vbo.vertex_buffer.at(i+4), (int)ConActive->vbo.vertex_buffer.at(i+5));
       }
     break;
 
@@ -323,9 +349,39 @@ void sglScale(float scalex, float scaley, float scalez) {
   }
 }
 
-void sglRotate2D(float angle, float centerx, float centery) {}
+void sglRotate2D(float angle, float centerx, float centery) {
 
-void sglRotateY(float angle) {}
+
+
+
+
+
+
+
+
+
+
+
+}
+
+void sglRotateY(float angle) {
+  float mat[16] = {cos(angle), 0, -sin(angle), 0,
+                   0,          1, 0,           0,
+                   sin(angle), 0, cos(angle) , 0,
+                   0,          0, 0,           1 };
+  Matrix4f m;
+  memcpy(m.matrix, mat, sizeof(float)*16);
+  switch (ConActive->MatrixMode)
+  {
+  case SGL_MODELVIEW:
+    ConActive->modelViewStack.MultiplyFromLeft(m);
+    break;
+
+  case SGL_PROJECTION:
+    ConActive->projectionStack.MultiplyFromLeft(m);
+    break;
+  }
+}
 
 void sglOrtho(float left, float right, float bottom, float top, float near, float far) {
 
@@ -371,7 +427,14 @@ void sglColor3f(float r, float g, float b) {
 
 void sglAreaMode(sglEAreaMode mode) {}
 
-void sglPointSize(float size) {}
+void sglPointSize(float size) {
+
+
+
+
+
+
+}
 
 void sglEnable(sglEEnableFlags cap) {
   if(cap = SGL_DEPTH_TEST){

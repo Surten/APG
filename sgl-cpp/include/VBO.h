@@ -1,3 +1,9 @@
+#ifndef _VBO_H_
+#define _VBO_H_
+
+#include <vector>
+
+
 struct Viewport{
     int x;
     int y;
@@ -21,28 +27,5 @@ public:
     size_t GetSize();
 
 };
-VBO::VBO(){
-}
-VBO::~VBO(){}
 
-void VBO::InsertVertex(float x, float y, float z, float w)
-{
-    vertex_buffer.push_back(x);
-    vertex_buffer.push_back(y);
-    vertex_buffer.push_back(z);
-    vertex_buffer.push_back(w);
-    currIndex += 4;
-
-}
-
-void VBO::ClearVBO(){
-    currIndex = 0;
-    //do I need to erase everything??
-    // feels like I can just override it
-}
-
-size_t VBO::GetSize(){
-    return currIndex;
-}
-
-
+#endif
