@@ -22,13 +22,10 @@ public:
 	sglEElementType EleType; 
 	VBO vbo;
 	sglEMatrixMode MatrixMode;
-	sglEEnableFlags flags;
+	bool depthActive;
 
-	//Matrix4f * modelViewStack;
-	//Matrix4f * projectionStack;
-
-	//void MatrixPush();
-	//void MatrixPop();
+	MatrixLinkedList modelViewStack;
+	MatrixLinkedList projectionStack;
 
 	Context();
 	~Context();

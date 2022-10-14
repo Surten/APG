@@ -1,7 +1,6 @@
 class VBO{
-    float* vertex_buffer;
+    std::vector<float> vertex_buffer;
     int currIndex = 0;
-    int allocatedSize = 0;
 
 public:
     VBO();
@@ -11,18 +10,11 @@ public:
 
 };
 VBO::VBO(){
-    allocatedSize = 1000;
-    vertex_buffer = new float[allocatedSize];
 }
-VBO::~VBO(){
-    delete vertex_buffer;
-}
+VBO::~VBO(){}
 
 void VBO::InsertVertex(float x, float y, float z, float w)
 {
-    if(allocatedSize <= currIndex+5){
-        //reallocate to a higher size
-    }
     vertex_buffer[currIndex++] = x;
     vertex_buffer[currIndex++] = y;
     vertex_buffer[currIndex++] = z;
