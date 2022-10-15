@@ -21,11 +21,12 @@ public:
 	unsigned int colorBufferSize;
 	float currentColor[3];
 	float clearColor[3];
-	sglEElementType EleType; 
+	sglEElementType EleType;
 	VBO vbo;
 	sglEMatrixMode MatrixMode;
 	bool depthActive;
 	Viewport viewport;
+	int pointSize = 1;
 
 	MatrixLinkedList modelViewStack;
 	MatrixLinkedList projectionStack;

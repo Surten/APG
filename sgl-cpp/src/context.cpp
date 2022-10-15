@@ -10,15 +10,17 @@ Context::~Context(){}
 
 
 void Context::MatrixMultVector(Matrix4f& m, float& x, float& y, float& z, float& w){
+
 	float xx,yy,zz,ww;
-	xx = m.matrix[0]*x + m.matrix[1]*x + m.matrix[2]*x + m.matrix[3]*x;
-	yy = m.matrix[4]*y + m.matrix[5]*y + m.matrix[6]*y + m.matrix[7]*y;
-	zz = m.matrix[8]*z + m.matrix[9]*z + m.matrix[10]*z + m.matrix[11]*z;
-	ww = m.matrix[12]*w + m.matrix[13]*w + m.matrix[14]*w + m.matrix[15]*w;
+	xx = m.matrix[0]*x + m.matrix[1]*y + m.matrix[2]*z + m.matrix[3]*w;
+	yy = m.matrix[4]*x + m.matrix[5]*y + m.matrix[6]*z + m.matrix[7]*w;
+	zz = m.matrix[8]*x + m.matrix[9]*y + m.matrix[10]*z + m.matrix[11]*w;
+	ww = m.matrix[12]*x + m.matrix[13]*y + m.matrix[14]*y + m.matrix[15]*w;
 	x=xx;
 	y=yy;
 	z=zz;
 	w=ww;
+
 }
 
 
@@ -32,7 +34,7 @@ void Context::VertexShader(float& x, float& y, float& z, float& w){
 void Context::PerspectiveDivision(float& x, float& y, float& z, float& w){
 	x = x / w;
 	y = y / w;
-	z = y / w;
+	z = z / w;
 }
 
 void Context::ViewPortTransform(float& x, float& y){

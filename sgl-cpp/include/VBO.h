@@ -14,7 +14,7 @@ struct Viewport{
 
 
 class VBO{
-    size_t allocated = 5000;
+    size_t allocated = 1000;
     size_t currIndex = 0;
 
 public:

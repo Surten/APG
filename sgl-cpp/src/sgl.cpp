@@ -141,19 +141,13 @@ void sglBegin(sglEElementType mode) {
 void sglEnd(void) {
   VBO *v = &ConActive->vbo;
 
-  
   for (size_t i = 0; i < v->GetSize(); i+=4)
   {
-    //std::cout << v->vertex_buffer.at(i) << " " << v->vertex_buffer.at(i+1) << " " << v->vertex_buffer.at(i+2) << " " << v->vertex_buffer.at(i+3) << std::endl;
     ConActive->VertexShader(v->vertex_buffer.at(i), v->vertex_buffer.at(i+1),
           v->vertex_buffer.at(i+2), v->vertex_buffer.at(i+3));
-    //std::cout << v->vertex_buffer.at(i) << " " << v->vertex_buffer.at(i+1) << " " << v->vertex_buffer.at(i+2) << " " << v->vertex_buffer.at(i+3) << std::endl;
     ConActive->PerspectiveDivision(v->vertex_buffer.at(i), v->vertex_buffer.at(i+1),
           v->vertex_buffer.at(i+2), v->vertex_buffer.at(i+3));
-        //std::cout << v->vertex_buffer.at(i) << " " << v->vertex_buffer.at(i+1) << " " << v->vertex_buffer.at(i+2) << " " << v->vertex_buffer.at(i+3) << std::endl;
     ConActive->ViewPortTransform(v->vertex_buffer.at(i), v->vertex_buffer.at(i+1));
-        //std::cout << v->vertex_buffer.at(i) << " " << v->vertex_buffer.at(i+1) << " " << v->vertex_buffer.at(i+2) << " " << v->vertex_buffer.at(i+3) << std::endl;
-       
   }
 
   Rasterizer rasterizer(ConActive);
@@ -161,28 +155,27 @@ void sglEnd(void) {
   switch (ConActive->EleType)
   {
   case SGL_POINTS:
-    //ConActive->modelViewStack.top->PrintMatrix();
     for (size_t i = 0; i < v->GetSize(); i += 4)
     {
-      rasterizer.DrawPoint((int)v->vertex_buffer.at(i), (int)v->vertex_buffer.at(i+1));
-      //std::cout << v->GetSize() << " " << v->vertex_buffer.at(i) << " " << v->vertex_buffer.at(i+1) << std::endl;
-
+      rasterizer.DrawPoint(static_cast<int>(v->vertex_buffer.at(i)), static_cast<int>(v->vertex_buffer.at(i+1)));
     }
     break;
 
   case SGL_LINES:
+
     for (size_t i = 0; i < v->GetSize(); i += 8)
     {
-      rasterizer.DrawLine((int)v->vertex_buffer.at(i), (int)v->vertex_buffer.at(i+1),
-          (int)v->vertex_buffer.at(i+4), (int)v->vertex_buffer.at(i+5));
+      rasterizer.DrawLine(static_cast<int>(v->vertex_buffer.at(i)), static_cast<int>(v->vertex_buffer.at(i+1)),
+          static_cast<int>(v->vertex_buffer.at(i+4)), static_cast<int>(v->vertex_buffer.at(i+5)));
     }
     break;
 
   case SGL_LINE_STRIP:
+
       for (size_t i = 0; i < v->GetSize()-4; i += 4)
       {
-        rasterizer.DrawLine((int)v->vertex_buffer.at(i), (int)v->vertex_buffer.at(i+1),
-            (int)v->vertex_buffer.at(i+4), (int)v->vertex_buffer.at(i+5));
+        rasterizer.DrawLine(static_cast<int>(v->vertex_buffer.at(i)), static_cast<int>(v->vertex_buffer.at(i+1)),
+            static_cast<int>(v->vertex_buffer.at(i+4)), static_cast<int>(v->vertex_buffer.at(i+5)));
       }
     break;
 
@@ -237,10 +230,13 @@ void sglVertex2f(float x, float y) {
 }
 
 void sglCircle(float x, float y, float z, float radius) {
-
+//hardcore
 }
 
-void sglEllipse(float x, float y, float z, float a, float b) {}
+void sglEllipse(float x, float y, float z, float a, float b) {
+  //calculate 40 vertexes and load the using SGL_LINE_LOOP
+  
+}
 
 void sglArc(float x, float y, float z, float radius, float from, float to) {}
 
@@ -490,12 +486,7 @@ void sglColor3f(float r, float g, float b) {
 void sglAreaMode(sglEAreaMode mode) {}
 
 void sglPointSize(float size) {
-
-
-
-
-
-
+  ConActive->pointSize = size;
 }
 
 void sglEnable(sglEEnableFlags cap) {
