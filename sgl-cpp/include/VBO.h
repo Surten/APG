@@ -2,6 +2,7 @@
 #define _VBO_H_
 
 #include <vector>
+#include <algorithm>
 
 
 struct Viewport{
@@ -23,6 +24,7 @@ public:
     VBO();
     ~VBO();
     void InsertVertex(float x, float y, float z, float w);
+    void InsertVertexAt(float x, float y, float z, float w, size_t index);
     void ClearVBO();
     size_t GetSize();
 

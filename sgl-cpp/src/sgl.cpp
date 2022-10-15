@@ -230,15 +230,45 @@ void sglVertex2f(float x, float y) {
 }
 
 void sglCircle(float x, float y, float z, float radius) {
-//hardcore
+  //ConActive->modelViewStack.top 
+  //ConActive->projectionStack.top
+  //calculate the scale from these matricies
+  
+  //ConActive->VertexShader;             after this we get clip coordinates   
+  //ConActive->PerspectiveDivision;      after this we get normalized device coordinates
+  //ConActive->ViewPortTransform;        after this we get window coordinates
+  //use these funcions to transform the center of the circle
+
+  Rasterizer rasterizer(ConActive);
+  //use rasterizer.setPixel(x,y); to draw the pixel on screen
+  //which pixels to draw you determine in the window coordinates which are ranging from 0 to Con->frameWidth/Height
 }
 
 void sglEllipse(float x, float y, float z, float a, float b) {
-  //calculate 40 vertexes and load the using SGL_LINE_LOOP
-  
+  sglBegin(SGL_LINE_LOOP);
+  float pi = 2*acos(0.0);
+  float t = pi / 20;
+  int j = 0;
+  for (float i = 0; i < 2*pi; i+=t)
+  {
+      ConActive->vbo.InsertVertexAt(x+(a*cos(i))  , y+(b*sin(i)), z, 1, 0+j);
+      j++;
+  }
+  sglEnd();
 }
 
-void sglArc(float x, float y, float z, float radius, float from, float to) {}
+void sglArc(float x, float y, float z, float radius, float from, float to) {
+  sglBegin(SGL_LINE_STRIP);
+  //float pi = 2*acos(0.0);
+  float t = (to-from)/40;
+  int j = 0;
+  for (float i = from; i < to; i+=t)
+  {
+      ConActive->vbo.InsertVertexAt(x+(radius*cos(i))  , y+(radius*sin(i)), z, 1, 0+j);
+      j++;
+  }
+  sglEnd();
+}
 
 //---------------------------------------------------------------------------
 // Transform functions
@@ -249,22 +279,20 @@ void sglMatrixMode(sglEMatrixMode mode) {
 }
 
 void sglPushMatrix(void) {
-  float m[16];
-  Matrix4f mat;
   switch (ConActive->MatrixMode)
   {
-  case SGL_MODELVIEW:
-
-    std::copy(ConActive->modelViewStack.top->matrix,ConActive->modelViewStack.top->matrix+16,m);
-    mat.InsertMatrix(m);
+  case SGL_MODELVIEW:{
+    Matrix4f mat(*ConActive->modelViewStack.top);
     ConActive->modelViewStack.Push(mat);
-    break;
+  }
+  break;
 
-  case SGL_PROJECTION:
-std::copy(ConActive->projectionStack.top->matrix,ConActive->projectionStack.top->matrix+16,m);
-    mat.InsertMatrix(m);
+  case SGL_PROJECTION:{
+    Matrix4f mat(*ConActive->modelViewStack.top);
     ConActive->projectionStack.Push(mat);
-    break;
+  }
+  break;
+  
   }
 }
 
@@ -342,11 +370,12 @@ void sglTranslate(float x, float y, float z) {
   switch (ConActive->MatrixMode)
   {
   case SGL_MODELVIEW:
-    ConActive->modelViewStack.MultiplyFromLeft(m);
+    //ConActive->modelViewStack.MultiplyFromLeft(m);
+    *ConActive->modelViewStack.top = *ConActive->modelViewStack.top * m;
     break;
 
   case SGL_PROJECTION:
-    ConActive->projectionStack.MultiplyFromLeft(m);
+    *ConActive->projectionStack.top = *ConActive->projectionStack.top * m;
     break;
   }
 }
@@ -363,37 +392,39 @@ void sglScale(float scalex, float scaley, float scalez) {
   switch (ConActive->MatrixMode)
   {
   case SGL_MODELVIEW:
-    ConActive->modelViewStack.MultiplyFromLeft(m);
+    //ConActive->modelViewStack.MultiplyFromLeft(m);
+    *ConActive->modelViewStack.top = *ConActive->modelViewStack.top * m;
     break;
 
   case SGL_PROJECTION:
-    ConActive->projectionStack.MultiplyFromLeft(m);
+    *ConActive->projectionStack.top = *ConActive->projectionStack.top * m;
     break;
   }
 }
 
 void sglRotate2D(float angle, float centerx, float centery) {
-  /*
+  
   sglTranslate(centerx, centery, 0);
+  Matrix4f m;
   float mat[16] = {cos(angle), -sin(angle), 0, 0,
                    sin(angle), cos(angle) , 0, 0,
                    0         , 0          , 1, 0,
                    0         , 0          , 0, 1 };
-  Matrix4f m;
-  memcpy(m.matrix, mat, sizeof(float)*16);
+
+  std::copy(mat, mat+16, m.matrix);
   switch (ConActive->MatrixMode)
   {
   case SGL_MODELVIEW:
-    ConActive->modelViewStack.MultiplyFromLeft(m);
+    *ConActive->modelViewStack.top = *ConActive->modelViewStack.top * m;
     break;
 
   case SGL_PROJECTION:
-    ConActive->projectionStack.MultiplyFromLeft(m);
+    *ConActive->projectionStack.top = *ConActive->projectionStack.top * m;
     break;
   }
 
   sglTranslate(-centerx, -centery, 0);
-*/
+
 }
 
 void sglRotateY(float angle) {
@@ -406,11 +437,11 @@ void sglRotateY(float angle) {
   switch (ConActive->MatrixMode)
   {
   case SGL_MODELVIEW:
-    ConActive->modelViewStack.MultiplyFromLeft(m);
+    *ConActive->modelViewStack.top = *ConActive->modelViewStack.top * m;
     break;
 
   case SGL_PROJECTION:
-    ConActive->projectionStack.MultiplyFromLeft(m);
+    *ConActive->projectionStack.top = *ConActive->projectionStack.top * m;
     break;
   }
 }
@@ -429,11 +460,11 @@ void sglOrtho(float left, float right, float bottom, float top, float near, floa
   switch (ConActive->MatrixMode)
   {
   case SGL_MODELVIEW:
-    ConActive->modelViewStack.MultiplyFromRight(orthoMat);
+    *ConActive->modelViewStack.top = *ConActive->modelViewStack.top * orthoMat;
     break;
 
   case SGL_PROJECTION:
-    ConActive->projectionStack.MultiplyFromRight(orthoMat);
+    *ConActive->projectionStack.top = *ConActive->projectionStack.top * orthoMat;
     break;
   }
 }

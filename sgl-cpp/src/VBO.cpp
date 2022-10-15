@@ -1,5 +1,6 @@
 #include "VBO.h"
 
+
 void VBO::InsertVertex(float x, float y, float z, float w)
 {
     if(allocated < currIndex+8){
@@ -11,6 +12,17 @@ void VBO::InsertVertex(float x, float y, float z, float w)
     vertex_buffer.at(currIndex++) = z;
     vertex_buffer.at(currIndex++) = w;
     //currIndex += 4;
+
+}
+
+void VBO::InsertVertexAt(float x, float y, float z, float w, size_t index){
+    index *=4;
+    currIndex = std::max(currIndex, index+4);
+
+    vertex_buffer.at(index) = x;
+    vertex_buffer.at(index+1) = y;
+    vertex_buffer.at(index+2) = z;
+    vertex_buffer.at(index+3) = w;
 
 }
 
