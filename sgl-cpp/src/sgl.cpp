@@ -282,8 +282,8 @@ void sglPushMatrix(void) {
   switch (ConActive->MatrixMode)
   {
   case SGL_MODELVIEW:{
-    Matrix4f mat(*ConActive->modelViewStack.top);
-    ConActive->modelViewStack.Push(mat);
+    Matrix4f* mat = new Matrix4f(*ConActive->modelViewStack.top);
+    ConActive->modelViewStack.Push(*mat);
   }
   break;
 
@@ -297,7 +297,7 @@ void sglPushMatrix(void) {
 }
 
 void sglPopMatrix(void) {
-    switch (ConActive->MatrixMode)
+  switch (ConActive->MatrixMode)
   {
   case SGL_MODELVIEW:
     ConActive->modelViewStack.Pop();
@@ -370,7 +370,6 @@ void sglTranslate(float x, float y, float z) {
   switch (ConActive->MatrixMode)
   {
   case SGL_MODELVIEW:
-    //ConActive->modelViewStack.MultiplyFromLeft(m);
     *ConActive->modelViewStack.top = *ConActive->modelViewStack.top * m;
     break;
 

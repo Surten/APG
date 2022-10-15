@@ -28,7 +28,7 @@ public:
     Matrix4f* top;
     int size = 0;
     
-    void Push(Matrix4f m);
+    void Push(Matrix4f& m);
     void Pop();
 
     void MultiplyFromRight(Matrix4f mat);
