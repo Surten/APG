@@ -1,27 +1,33 @@
+#ifndef _VBO_H_
+#define _VBO_H_
+
+#include <vector>
+#include <algorithm>
+
+
+struct Viewport{
+    int x;
+    int y;
+    int width;
+    int height;
+};
+
+
+
 class VBO{
-    float* vertex_buffer;
-    int currIndex = 0;
-    int allocatedSize = 0;
+    size_t allocated = 1000;
+    size_t currIndex = 0;
 
 public:
+    std::vector<float> vertex_buffer;
+
     VBO();
     ~VBO();
     void InsertVertex(float x, float y, float z, float w);
-
+    void InsertVertexAt(float x, float y, float z, float w, size_t index);
+    void ClearVBO();
+    size_t GetSize();
 
 };
-VBO::VBO(){
-    allocatedSize = 1000;
-    vertex_buffer = new float[allocatedSize];
-}
-VBO::~VBO(){
-    delete vertex_buffer;
-}
 
-void VBO::InsertVertex(float x, float y, float z, float w)
-{
-    vertex_buffer
-}
-
-
-
+#endif

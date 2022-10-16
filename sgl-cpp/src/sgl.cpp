@@ -9,7 +9,12 @@
 
 #include "sgl.h"
 #include "context.h"
+#include "Rasterizer.h"
 
+#include <cmath>
+
+Context* ConActive = nullptr;
+std::vector<Context> ContextArray;
 /// Current error code.
 static sglEErrorCode _libStatus = SGL_NO_ERROR;
 
@@ -63,29 +68,36 @@ void sglInit(void) {
 
 void sglFinish(void) {
   //~init
+  //free memory
+  for(Context c : ContextArray){
+    delete c.color_buffer;
+  }
+  
 }
 
 int sglCreateContext(int width, int height) {
-  Context c;
-  c.id = ContextArray.size();
-  c.frameWidth = width;
-  c.frameHeight = height;
-
-  c.color_buffer = (float*)malloc(3*sizeof(float)*width*height);
+  Context c((int)ContextArray.size(), width, height);
   ContextArray.push_back(c);
   return c.id;
 }
 
 void sglDestroyContext(int id) {
-  //ContextArray[id];
+  for (size_t i = 0; i < ContextArray.size(); i++)
+  {
+    if(ContextArray.at(i).id == id) ContextArray.erase(ContextArray.begin() + i);
+  }
 }
 
 void sglSetContext(int id) {
-  ConActive = &ContextArray.at(id);
+  
+  for (size_t i = 0; i < ContextArray.size(); i++)
+  {
+    if(ContextArray.at(i).id == id) ConActive = &ContextArray.at(i);
+  }
 }
 
 int sglGetContext(void) {
-    return ConActive->id;
+  return ConActive->id;
 }
 
 float *sglGetColorBufferPointer(void) {
@@ -100,21 +112,113 @@ void sglClearColor(float r, float g, float b, float alpha) {
   ConActive->clearColor[0] = r;
   ConActive->clearColor[1] = g;
   ConActive->clearColor[2] = b;
-  ConActive->clearColor[3] = alpha;
+  //ConActive->clearColor[3] = alpha;
 }
 
 void sglClear(unsigned what) {
-//  ContextArray[manager.currentContext].color_buff
+    switch (what)
+    {
+    case SGL_COLOR_BUFFER_BIT:
+      for (size_t i = 0; i < ConActive->colorBufferSize; i+=3)
+      {
+        ConActive->color_buffer[i] = ConActive->clearColor[0];
+        ConActive->color_buffer[i+1] = ConActive->clearColor[1];
+        ConActive->color_buffer[i+2] = ConActive->clearColor[2];
+      }
+      break;
+    
+    case SGL_DEPTH_BUFFER_BIT:
+      break;
+    default:
+      break;
+    }
 }
 
 void sglBegin(sglEElementType mode) {
   ConActive->EleType = mode;
+
+}
+void sglEnd(void) {
+  VBO *v = &ConActive->vbo;
+
+  for (size_t i = 0; i < v->GetSize(); i+=4)
+  {
+    ConActive->VertexShader(v->vertex_buffer.at(i), v->vertex_buffer.at(i+1),
+          v->vertex_buffer.at(i+2), v->vertex_buffer.at(i+3));
+    ConActive->PerspectiveDivision(v->vertex_buffer.at(i), v->vertex_buffer.at(i+1),
+          v->vertex_buffer.at(i+2), v->vertex_buffer.at(i+3));
+    ConActive->ViewPortTransform(v->vertex_buffer.at(i), v->vertex_buffer.at(i+1));
+  }
+
+  Rasterizer rasterizer(ConActive);
+
+  switch (ConActive->EleType)
+  {
+  case SGL_POINTS:
+    for (size_t i = 0; i < v->GetSize(); i += 4)
+    {
+      rasterizer.DrawPoint(static_cast<int>(v->vertex_buffer.at(i)), static_cast<int>(v->vertex_buffer.at(i+1)));
+    }
+    break;
+
+  case SGL_LINES:
+
+    for (size_t i = 0; i < v->GetSize(); i += 8)
+    {
+      rasterizer.DrawLine(static_cast<int>(v->vertex_buffer.at(i)), static_cast<int>(v->vertex_buffer.at(i+1)),
+          static_cast<int>(v->vertex_buffer.at(i+4)), static_cast<int>(v->vertex_buffer.at(i+5)));
+    }
+    break;
+
+  case SGL_LINE_STRIP:
+
+      for (size_t i = 0; i < v->GetSize()-4; i += 4)
+      {
+        rasterizer.DrawLine(static_cast<int>(v->vertex_buffer.at(i)), static_cast<int>(v->vertex_buffer.at(i+1)),
+            static_cast<int>(v->vertex_buffer.at(i+4)), static_cast<int>(v->vertex_buffer.at(i+5)));
+      }
+    break;
+
+  case SGL_LINE_LOOP:
+    for (size_t i = 0; i < v->GetSize()-4; i += 4)
+    {
+      rasterizer.DrawLine((int)v->vertex_buffer.at(i), (int)v->vertex_buffer.at(i+1),
+          (int)v->vertex_buffer.at(i+4), (int)v->vertex_buffer.at(i+5));
+    }
+    rasterizer.DrawLine((int)v->vertex_buffer.at(v->GetSize()-4), (int)v->vertex_buffer.at(v->GetSize()-3),
+          (int)v->vertex_buffer.at(0), (int)v->vertex_buffer.at(1));
+    break;
+
+  case SGL_TRIANGLES:
+      for (size_t i = 0; i < v->GetSize(); i += 12)
+      {
+        rasterizer.DrawTriangle(
+            (int)v->vertex_buffer.at(i), (int)v->vertex_buffer.at(i+1),
+            (int)v->vertex_buffer.at(i+4), (int)v->vertex_buffer.at(i+5),
+            (int)v->vertex_buffer.at(i+8), (int)v->vertex_buffer.at(i+9));
+      }
+    break;
+
+  case SGL_POLYGON:
+    /* code */
+    break;
+
+  case SGL_AREA_LIGHT:
+    /* code */
+    break;
+
+  case SGL_LAST_ELEMENT_TYPE:
+    /* code */
+    break;
+  
+  default:
+    break;
+  }
+  v->ClearVBO();
 }
 
-void sglEnd(void) {}
-
 void sglVertex4f(float x, float y, float z, float w) {
-  //ConActive->vbo;
+  ConActive->vbo.InsertVertex(x,y,z,w);
 }
 
 void sglVertex3f(float x, float y, float z) {
@@ -125,11 +229,46 @@ void sglVertex2f(float x, float y) {
   sglVertex4f(x,y,0,1);
 }
 
-void sglCircle(float x, float y, float z, float radius) {}
+void sglCircle(float x, float y, float z, float radius) {
+  //ConActive->modelViewStack.top 
+  //ConActive->projectionStack.top
+  //calculate the scale from these matricies
+  
+  //ConActive->VertexShader;             after this we get clip coordinates   
+  //ConActive->PerspectiveDivision;      after this we get normalized device coordinates
+  //ConActive->ViewPortTransform;        after this we get window coordinates
+  //use these funcions to transform the center of the circle
 
-void sglEllipse(float x, float y, float z, float a, float b) {}
+  Rasterizer rasterizer(ConActive);
+  //use rasterizer.setPixel(x,y); to draw the pixel on screen
+  //which pixels to draw you determine in the window coordinates which are ranging from 0 to Con->frameWidth/Height
+}
 
-void sglArc(float x, float y, float z, float radius, float from, float to) {}
+void sglEllipse(float x, float y, float z, float a, float b) {
+  sglBegin(SGL_LINE_LOOP);
+  float pi = 2*acos(0.0);
+  float t = pi / 20;
+  int j = 0;
+  for (float i = 0; i < 2*pi; i+=t)
+  {
+      ConActive->vbo.InsertVertexAt(x+(a*cos(i))  , y+(b*sin(i)), z, 1, 0+j);
+      j++;
+  }
+  sglEnd();
+}
+
+void sglArc(float x, float y, float z, float radius, float from, float to) {
+  sglBegin(SGL_LINE_STRIP);
+  //float pi = 2*acos(0.0);
+  float t = (to-from)/40;
+  int j = 0;
+  for (float i = from; i < to; i+=t)
+  {
+      ConActive->vbo.InsertVertexAt(x+(radius*cos(i))  , y+(radius*sin(i)), z, 1, 0+j);
+      j++;
+  }
+  sglEnd();
+}
 
 void sglLine(float x_beggin,float y_beggin,float x_end,float y_end){
 
@@ -142,45 +281,262 @@ void sglPoint(float x,float y){
 // Transform functions
 //---------------------------------------------------------------------------
 
-void sglMatrixMode(sglEMatrixMode mode) {}
+void sglMatrixMode(sglEMatrixMode mode) {
+  ConActive->MatrixMode = mode;
+}
 
-void sglPushMatrix(void) {}
+void sglPushMatrix(void) {
+  switch (ConActive->MatrixMode)
+  {
+  case SGL_MODELVIEW:{
+    Matrix4f* mat = new Matrix4f(*ConActive->modelViewStack.top);
+    ConActive->modelViewStack.Push(*mat);
+  }
+  break;
 
-void sglPopMatrix(void) {}
+  case SGL_PROJECTION:{
+    Matrix4f mat(*ConActive->modelViewStack.top);
+    ConActive->projectionStack.Push(mat);
+  }
+  break;
+  
+  }
+}
 
-void sglLoadIdentity(void) {}
+void sglPopMatrix(void) {
+  switch (ConActive->MatrixMode)
+  {
+  case SGL_MODELVIEW:
+    ConActive->modelViewStack.Pop();
+    break;
 
-void sglLoadMatrix(const float *matrix) {}
+  case SGL_PROJECTION:
+    ConActive->projectionStack.Pop();
+    break;
+  }
+}
 
-void sglMultMatrix(const float *matrix) {}
+void sglLoadIdentity(void) {
+    float mat[16] = 
+             {1,0,0,0,
+              0,1,0,0,
+              0,0,1,0,
+              0,0,0,1};
+  switch (ConActive->MatrixMode)
+  {
+  case SGL_MODELVIEW:
+    std::copy(mat,mat+16,ConActive->modelViewStack.top->matrix);
+    break;
 
-void sglTranslate(float x, float y, float z) {}
+  case SGL_PROJECTION:
+    std::copy(mat,mat+16,ConActive->projectionStack.top->matrix);
+    break;
+  }
+}
 
-void sglScale(float scalex, float scaley, float scalez) {}
+void sglLoadMatrix(const float *matrix) {
 
-void sglRotate2D(float angle, float centerx, float centery) {}
+  switch (ConActive->MatrixMode)
+  {
+  case SGL_MODELVIEW:
+    std::copy(matrix,matrix+16,ConActive->modelViewStack.top->matrix);
+    break;
 
-void sglRotateY(float angle) {}
+  case SGL_PROJECTION:
+    std::copy(matrix,matrix+16,ConActive->projectionStack.top->matrix);
+    break;
+  }
+}
 
-void sglOrtho(float left, float right, float bottom, float top, float near, float far) {}
+void sglMultMatrix(const float *matrix) {
+  Matrix4f m;
+  float temp[16];
+  std::copy(matrix,matrix+16,temp);
+  m.InsertMatrix(temp);
+  switch (ConActive->MatrixMode)
+  {
+  case SGL_MODELVIEW:
+    ConActive->modelViewStack.MultiplyFromRight(m);
+    break;
 
-void sglFrustum(float left, float right, float bottom, float top, float near, float far) {}
+  case SGL_PROJECTION:
+    ConActive->projectionStack.MultiplyFromRight(m);
+    break;
+  }
+}
 
-void sglViewport(int x, int y, int width, int height) {}
+void sglTranslate(float x, float y, float z) {
+
+  Matrix4f m;
+  float mat[16] = {1,0,0,x,
+                   0,1,0,y,
+                   0,0,1,z,
+                   0,0,0,1};
+  m.InsertMatrix(mat);
+
+  switch (ConActive->MatrixMode)
+  {
+  case SGL_MODELVIEW:
+    *ConActive->modelViewStack.top = *ConActive->modelViewStack.top * m;
+    break;
+
+  case SGL_PROJECTION:
+    *ConActive->projectionStack.top = *ConActive->projectionStack.top * m;
+    break;
+  }
+}
+
+void sglScale(float scalex, float scaley, float scalez) {
+
+  Matrix4f m;
+  float mat[16] = {scalex,0,0,0,
+                   0,scaley,0,0,
+                   0,0,scalez,0,
+                   0,0,0,1};
+  m.InsertMatrix(mat);
+
+  switch (ConActive->MatrixMode)
+  {
+  case SGL_MODELVIEW:
+    //ConActive->modelViewStack.MultiplyFromLeft(m);
+    *ConActive->modelViewStack.top = *ConActive->modelViewStack.top * m;
+    break;
+
+  case SGL_PROJECTION:
+    *ConActive->projectionStack.top = *ConActive->projectionStack.top * m;
+    break;
+  }
+}
+
+void sglRotate2D(float angle, float centerx, float centery) {
+  
+  sglTranslate(centerx, centery, 0);
+  Matrix4f m;
+  float mat[16] = {cos(angle), -sin(angle), 0, 0,
+                   sin(angle), cos(angle) , 0, 0,
+                   0         , 0          , 1, 0,
+                   0         , 0          , 0, 1 };
+
+  std::copy(mat, mat+16, m.matrix);
+  switch (ConActive->MatrixMode)
+  {
+  case SGL_MODELVIEW:
+    *ConActive->modelViewStack.top = *ConActive->modelViewStack.top * m;
+    break;
+
+  case SGL_PROJECTION:
+    *ConActive->projectionStack.top = *ConActive->projectionStack.top * m;
+    break;
+  }
+
+  sglTranslate(-centerx, -centery, 0);
+
+}
+
+void sglRotateY(float angle) {
+  float mat[16] = {cos(angle), 0, -sin(angle), 0,
+                   0,          1, 0,           0,
+                   sin(angle), 0, cos(angle) , 0,
+                   0,          0, 0,           1 };
+  Matrix4f m;
+  std::copy(mat,mat+16, m.matrix);
+  switch (ConActive->MatrixMode)
+  {
+  case SGL_MODELVIEW:
+    *ConActive->modelViewStack.top = *ConActive->modelViewStack.top * m;
+    break;
+
+  case SGL_PROJECTION:
+    *ConActive->projectionStack.top = *ConActive->projectionStack.top * m;
+    break;
+  }
+}
+
+void sglOrtho(float left, float right, float bottom, float top, float near, float far) {
+
+  Matrix4f orthoMat;
+  orthoMat.matrix[0] = 2 / (right-left);
+  orthoMat.matrix[5] = 2 / (top - bottom);
+  orthoMat.matrix[10] = -2 / (far - near);
+
+  orthoMat.matrix[3] =-((right + left) / (right - left));
+  orthoMat.matrix[7] =-((top + bottom) / (top - bottom));
+  orthoMat.matrix[11] =-((far + near) / (far - near));
+
+  switch (ConActive->MatrixMode)
+  {
+  case SGL_MODELVIEW:
+    *ConActive->modelViewStack.top = *ConActive->modelViewStack.top * orthoMat;
+    break;
+
+  case SGL_PROJECTION:
+    *ConActive->projectionStack.top = *ConActive->projectionStack.top * orthoMat;
+    break;
+  }
+}
+
+void sglFrustum(float left, float right, float bottom, float top, float near, float far) {
+  Matrix4f orthoMat;
+  orthoMat.matrix[0] = (2 * near)/(right - left);
+  orthoMat.matrix[5] = (2 * near)/(top - bottom);
+
+
+  orthoMat.matrix[2] =((right + left) / (right - left));
+  orthoMat.matrix[6] =((top + bottom) / (top - bottom));
+  orthoMat.matrix[10] =-((far + near) / (far - near));
+
+  orthoMat.matrix[11] = -(2 * far * near)/(far - near);
+
+  orthoMat.matrix[14] = -1;
+  orthoMat.matrix[15] = 0;
+
+
+  switch (ConActive->MatrixMode)
+  {
+  case SGL_MODELVIEW:
+    ConActive->modelViewStack.MultiplyFromRight(orthoMat);
+    break;
+
+  case SGL_PROJECTION:
+    ConActive->projectionStack.MultiplyFromRight(orthoMat);
+    break;
+  }
+}
+
+void sglViewport(int x, int y, int width, int height) {
+  ConActive->viewport.x = x;
+  ConActive->viewport.y = y;
+  ConActive->viewport.width = width;
+  ConActive->viewport.height = height;
+}
 
 //---------------------------------------------------------------------------
 // Attribute functions
 //---------------------------------------------------------------------------
 
-void sglColor3f(float r, float g, float b) {}
+void sglColor3f(float r, float g, float b) {
+  ConActive->currentColor[0] = r;
+  ConActive->currentColor[1] = g;
+  ConActive->currentColor[2] = b;
+}
 
 void sglAreaMode(sglEAreaMode mode) {}
 
-void sglPointSize(float size) {}
+void sglPointSize(float size) {
+  ConActive->pointSize = size;
+}
 
-void sglEnable(sglEEnableFlags cap) {}
+void sglEnable(sglEEnableFlags cap) {
+  if(cap = SGL_DEPTH_TEST){
+    ConActive->depthActive = true;
+  }
+}
 
-void sglDisable(sglEEnableFlags cap) {}
+void sglDisable(sglEEnableFlags cap) {
+  if(cap = SGL_DEPTH_TEST){
+    ConActive->depthActive = false;
+  }
+}
 
 //---------------------------------------------------------------------------
 // RayTracing oriented functions

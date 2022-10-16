@@ -22,6 +22,7 @@ endif (WIN32)
 if (APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -framework OpenGL -framework GLUT")
 endif (APPLE)
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -pedantic")
 
 # Do not use GUI by default.
 add_definitions(-DUSE_GUI=0)
