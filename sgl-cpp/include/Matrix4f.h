@@ -16,7 +16,7 @@ public:
     void PrintMatrix();
     
     void InsertMatrix(float m[]);
-    Matrix4f Matrix4f::operator* (const Matrix4f& m1);
+    Matrix4f operator* (const Matrix4f& m1);
     //Matrix4f Matrix4f::operator= (const Matrix4f& m1);
     Matrix4f(const Matrix4f&);
     
