@@ -76,7 +76,7 @@ void sglFinish(void) {
 }
 
 int sglCreateContext(int width, int height) {
-  Context c((int)ContextArray.size(), width, height);
+  Context c(static_cast<int>(ContextArray.size()), width, height);
   ContextArray.push_back(c);
   return c.id;
 }
@@ -129,8 +129,6 @@ void sglClear(unsigned what) {
     
     case SGL_DEPTH_BUFFER_BIT:
       break;
-    default:
-      break;
     }
 }
 
@@ -182,20 +180,20 @@ void sglEnd(void) {
   case SGL_LINE_LOOP:
     for (size_t i = 0; i < v->GetSize()-4; i += 4)
     {
-      rasterizer.DrawLine((int)v->vertex_buffer.at(i), (int)v->vertex_buffer.at(i+1),
-          (int)v->vertex_buffer.at(i+4), (int)v->vertex_buffer.at(i+5));
+      rasterizer.DrawLine(static_cast<int>(v->vertex_buffer.at(i)), static_cast<int>(v->vertex_buffer.at(i+1)),
+          static_cast<int>(v->vertex_buffer.at(i+4)), static_cast<int>(v->vertex_buffer.at(i+5)));
     }
-    rasterizer.DrawLine((int)v->vertex_buffer.at(v->GetSize()-4), (int)v->vertex_buffer.at(v->GetSize()-3),
-          (int)v->vertex_buffer.at(0), (int)v->vertex_buffer.at(1));
+    rasterizer.DrawLine(static_cast<int>(v->vertex_buffer.at(v->GetSize()-4)), static_cast<int>(v->vertex_buffer.at(v->GetSize()-3)),
+          static_cast<int>(v->vertex_buffer.at(0)), static_cast<int>(v->vertex_buffer.at(1)));
     break;
 
   case SGL_TRIANGLES:
       for (size_t i = 0; i < v->GetSize(); i += 12)
       {
         rasterizer.DrawTriangle(
-            (int)v->vertex_buffer.at(i), (int)v->vertex_buffer.at(i+1),
-            (int)v->vertex_buffer.at(i+4), (int)v->vertex_buffer.at(i+5),
-            (int)v->vertex_buffer.at(i+8), (int)v->vertex_buffer.at(i+9));
+            static_cast<int>(v->vertex_buffer.at(i)), static_cast<int>(v->vertex_buffer.at(i+1)),
+            static_cast<int>(v->vertex_buffer.at(i+4)), static_cast<int>(v->vertex_buffer.at(i+5)),
+            static_cast<int>(v->vertex_buffer.at(i+8)), static_cast<int>(v->vertex_buffer.at(i+9)));
       }
     break;
 
@@ -246,7 +244,7 @@ void sglCircle(float x, float y, float z, float radius) {
 
 void sglEllipse(float x, float y, float z, float a, float b) {
   sglBegin(SGL_LINE_LOOP);
-  float pi = 2*acos(0.0);
+  float pi = static_cast<float>(2*acos(0.0));
   float t = pi / 20;
   int j = 0;
   for (float i = 0; i < 2*pi; i+=t)
@@ -522,7 +520,7 @@ void sglColor3f(float r, float g, float b) {
 void sglAreaMode(sglEAreaMode mode) {}
 
 void sglPointSize(float size) {
-  ConActive->pointSize = size;
+  ConActive->pointSize = static_cast<int>(size);
 }
 
 void sglEnable(sglEEnableFlags cap) {

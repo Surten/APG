@@ -15,9 +15,9 @@ void Rasterizer::setPixel(int x, int y){
 }
 
 void Rasterizer::setPixelBig(int x, int y){
-    for (size_t i = 0; i < Con->pointSize; i++)
+    for (int i = 0; i < Con->pointSize; i++)
     {
-        for (size_t j = 0; j < Con->pointSize; j++)
+        for (int j = 0; j < Con->pointSize; j++)
         {
             setPixel(x-((Con->pointSize-1)/2)+j,y-((Con->pointSize-1)/2)+i);
         }
