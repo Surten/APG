@@ -282,8 +282,8 @@ void sglPushMatrix(void) {
   switch (ConActive->MatrixMode)
   {
   case SGL_MODELVIEW:{
-    Matrix4f* mat = new Matrix4f(*ConActive->modelViewStack.top);
-    ConActive->modelViewStack.Push(*mat);
+    Matrix4f mat = *ConActive->modelViewStack.top;
+    ConActive->modelViewStack.Push(mat);
   }
   break;
 
@@ -370,11 +370,11 @@ void sglTranslate(float x, float y, float z) {
   switch (ConActive->MatrixMode)
   {
   case SGL_MODELVIEW:
-    *ConActive->modelViewStack.top = *ConActive->modelViewStack.top * m;
+    ConActive->modelViewStack.MultiplyFromRight(m);
     break;
 
   case SGL_PROJECTION:
-    *ConActive->projectionStack.top = *ConActive->projectionStack.top * m;
+    ConActive->projectionStack.MultiplyFromRight(m);
     break;
   }
 }
@@ -391,12 +391,11 @@ void sglScale(float scalex, float scaley, float scalez) {
   switch (ConActive->MatrixMode)
   {
   case SGL_MODELVIEW:
-    //ConActive->modelViewStack.MultiplyFromLeft(m);
-    *ConActive->modelViewStack.top = *ConActive->modelViewStack.top * m;
+    ConActive->modelViewStack.MultiplyFromRight(m);
     break;
 
   case SGL_PROJECTION:
-    *ConActive->projectionStack.top = *ConActive->projectionStack.top * m;
+    ConActive->projectionStack.MultiplyFromRight(m);
     break;
   }
 }
@@ -414,11 +413,11 @@ void sglRotate2D(float angle, float centerx, float centery) {
   switch (ConActive->MatrixMode)
   {
   case SGL_MODELVIEW:
-    *ConActive->modelViewStack.top = *ConActive->modelViewStack.top * m;
+    ConActive->modelViewStack.MultiplyFromRight(m);
     break;
 
   case SGL_PROJECTION:
-    *ConActive->projectionStack.top = *ConActive->projectionStack.top * m;
+    ConActive->projectionStack.MultiplyFromRight(m);
     break;
   }
 
@@ -436,11 +435,11 @@ void sglRotateY(float angle) {
   switch (ConActive->MatrixMode)
   {
   case SGL_MODELVIEW:
-    *ConActive->modelViewStack.top = *ConActive->modelViewStack.top * m;
+    ConActive->modelViewStack.MultiplyFromRight(m);
     break;
 
   case SGL_PROJECTION:
-    *ConActive->projectionStack.top = *ConActive->projectionStack.top * m;
+    ConActive->projectionStack.MultiplyFromRight(m);
     break;
   }
 }
@@ -459,39 +458,39 @@ void sglOrtho(float left, float right, float bottom, float top, float near, floa
   switch (ConActive->MatrixMode)
   {
   case SGL_MODELVIEW:
-    *ConActive->modelViewStack.top = *ConActive->modelViewStack.top * orthoMat;
-    break;
-
-  case SGL_PROJECTION:
-    *ConActive->projectionStack.top = *ConActive->projectionStack.top * orthoMat;
-    break;
-  }
-}
-
-void sglFrustum(float left, float right, float bottom, float top, float near, float far) {
-  Matrix4f orthoMat;
-  orthoMat.matrix[0] = (2 * near)/(right - left);
-  orthoMat.matrix[5] = (2 * near)/(top - bottom);
-
-
-  orthoMat.matrix[2] =((right + left) / (right - left));
-  orthoMat.matrix[6] =((top + bottom) / (top - bottom));
-  orthoMat.matrix[10] =-((far + near) / (far - near));
-
-  orthoMat.matrix[11] = -(2 * far * near)/(far - near);
-
-  orthoMat.matrix[14] = -1;
-  orthoMat.matrix[15] = 0;
-
-
-  switch (ConActive->MatrixMode)
-  {
-  case SGL_MODELVIEW:
     ConActive->modelViewStack.MultiplyFromRight(orthoMat);
     break;
 
   case SGL_PROJECTION:
     ConActive->projectionStack.MultiplyFromRight(orthoMat);
+    break;
+  }
+}
+
+void sglFrustum(float left, float right, float bottom, float top, float near, float far) {
+  Matrix4f m;
+  m.matrix[0] = (2 * near)/(right - left);
+  m.matrix[5] = (2 * near)/(top - bottom);
+
+
+  m.matrix[2] =((right + left) / (right - left));
+  m.matrix[6] =((top + bottom) / (top - bottom));
+  m.matrix[10] =-((far + near) / (far - near));
+
+  m.matrix[11] = -(2 * far * near)/(far - near);
+
+  m.matrix[14] = -1;
+  m.matrix[15] = 0;
+
+
+  switch (ConActive->MatrixMode)
+  {
+  case SGL_MODELVIEW:
+    ConActive->modelViewStack.MultiplyFromRight(m);
+    break;
+
+  case SGL_PROJECTION:
+    ConActive->projectionStack.MultiplyFromRight(m);
     break;
   }
 }

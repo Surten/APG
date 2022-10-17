@@ -32,8 +32,9 @@ Matrix4f Matrix4f::operator* (const Matrix4f& m1){
 }
 /*
 Matrix4f Matrix4f::operator= (const Matrix4f& m1){
-    memcpy(this->matrix, m1.matrix, sizeof(float)*16);
-    return;
+    Matrix4f m;
+    std::copy(m1.matrix, m1.matrix+16, m.matrix);
+    return m;
 }
 */
 
@@ -50,7 +51,6 @@ void Matrix4f::PrintMatrix(){
 }
 
 Matrix4f::Matrix4f(const Matrix4f& m1){
-    next = nullptr;
     std::copy(m1.matrix,m1.matrix+16,matrix);
 }
 
@@ -99,6 +99,7 @@ void Matrix4f::InsertRow(int row, float a, float b, float c, float d)
 MatrixLinkedList::MatrixLinkedList(){
     Matrix4f *m = new Matrix4f();
     top = m;
+
     size = 1;
 }
 
@@ -125,7 +126,7 @@ void MatrixLinkedList::MultiplyFromRight(Matrix4f m1){
             sum = 0;
             for (size_t k = 0; k < 4; k++)
             {
-                sum += m1.matrix[i+k*4] *m2[j*4+k];
+                sum += m2[i*4+k] * m1.matrix[j+k*4];
             }
             top->matrix[i*4+j] = sum;
         }   
@@ -153,8 +154,9 @@ void MatrixLinkedList::MultiplyFromLeft(Matrix4f m1){
 
 
 void MatrixLinkedList::Push(Matrix4f& m){
-    m.next = top;
-    top = &m;
+    Matrix4f *mat = new Matrix4f(m);
+    mat->next = top;
+    top = mat;
     size++;
 }
 
