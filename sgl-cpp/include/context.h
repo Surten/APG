@@ -6,12 +6,9 @@
 #include "VBO.h"
 #include "Matrix4f.h"
 
-
-
-
-///Pixel structure, float triplet r,g,b and it's index (after 2D->1D transformation)
-
-///Context structure, context_index, color_buffer and vertex_buffer
+/**
+ * Class containing all info about one drawing
+*/
 class Context{
 public:
 	int id;
@@ -34,10 +31,29 @@ public:
 	Context(int idd, int width, int heigth);
 	~Context();
 
+	/**
+	 * Multiplies Vector by Matrix
+	 * Vector is on the right of the multiplication sign
+	*/
 	void MatrixMultVector(Matrix4f& m, float& x, float& y, float& z, float& w);
 
+
+	/**
+	 * Part of transformation matrix
+	 * TODO merge all transforms together
+	*/
 	void VertexShader(float& x, float& y, float& z, float& w);
+
+	/**
+	 * Part of transformation matrix
+	 * TODO merge all transforms together
+	*/
 	void PerspectiveDivision(float& x, float& y, float& z, float& w);
+	
+	/**
+	 * Part of transformation matrix
+	 * TODO merge all transforms together
+	*/
 	void ViewPortTransform(float& x, float& y);
 
 

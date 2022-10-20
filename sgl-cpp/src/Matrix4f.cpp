@@ -15,28 +15,32 @@ Matrix4f::~Matrix4f(){}
 
 Matrix4f Matrix4f::operator* (const Matrix4f& m1){
     Matrix4f ret;
-    float sum;
-    for (size_t i = 0; i < 4; i++)
     {
-        for (size_t j = 0; j < 4; j++)
-        {
-           sum = 0;
-           for (size_t k = 0; k < 4; k++)
-            {
-                sum += this->matrix[i*4+k] * m1.matrix[j+k*4];
-            }
-            ret.matrix[i*4+j] = sum;
-        }
+    ret.matrix[0] = matrix[0]*m1.matrix[0] + matrix[1]*m1.matrix[4] + matrix[2]*m1.matrix[8] + matrix[3]*m1.matrix[12];
+    ret.matrix[1] = matrix[0]*m1.matrix[1] + matrix[1]*m1.matrix[5] + matrix[2]*m1.matrix[9] + matrix[3]*m1.matrix[13];
+    ret.matrix[2] = matrix[0]*m1.matrix[2] + matrix[1]*m1.matrix[6] + matrix[2]*m1.matrix[10] + matrix[3]*m1.matrix[14];
+    ret.matrix[3] = matrix[0]*m1.matrix[3] + matrix[1]*m1.matrix[7] + matrix[2]*m1.matrix[11] + matrix[3]*m1.matrix[15];
+
+    ret.matrix[4] = matrix[4]*m1.matrix[0] + matrix[5]*m1.matrix[4] + matrix[6]*m1.matrix[8] + matrix[7]*m1.matrix[12];
+    ret.matrix[5] = matrix[4]*m1.matrix[1] + matrix[5]*m1.matrix[5] + matrix[6]*m1.matrix[9] + matrix[7]*m1.matrix[13];
+    ret.matrix[6] = matrix[4]*m1.matrix[2] + matrix[5]*m1.matrix[6] + matrix[6]*m1.matrix[10] + matrix[7]*m1.matrix[14];
+    ret.matrix[7] = matrix[4]*m1.matrix[3] + matrix[5]*m1.matrix[7] + matrix[6]*m1.matrix[11] + matrix[7]*m1.matrix[15];
+
+
+    ret.matrix[8] = matrix[8]*m1.matrix[0] + matrix[9]*m1.matrix[4] + matrix[10]*m1.matrix[8] + matrix[11]*m1.matrix[12];
+    ret.matrix[9] = matrix[8]*m1.matrix[1] + matrix[9]*m1.matrix[5] + matrix[10]*m1.matrix[9] + matrix[11]*m1.matrix[13];
+    ret.matrix[10] = matrix[8]*m1.matrix[2] + matrix[9]*m1.matrix[6] + matrix[10]*m1.matrix[10] + matrix[11]*m1.matrix[14];
+    ret.matrix[11] = matrix[8]*m1.matrix[3] + matrix[9]*m1.matrix[7] + matrix[10]*m1.matrix[11] + matrix[11]*m1.matrix[15];
+
+
+    ret.matrix[12] = matrix[12]*m1.matrix[0] + matrix[13]*m1.matrix[4] + matrix[14]*m1.matrix[8] + matrix[15]*m1.matrix[12];
+    ret.matrix[13] = matrix[12]*m1.matrix[1] + matrix[13]*m1.matrix[5] + matrix[14]*m1.matrix[9] + matrix[15]*m1.matrix[13];
+    ret.matrix[14] = matrix[12]*m1.matrix[2] + matrix[13]*m1.matrix[6] + matrix[14]*m1.matrix[10] + matrix[15]*m1.matrix[14];
+    ret.matrix[15] = matrix[12]*m1.matrix[3] + matrix[13]*m1.matrix[7] + matrix[14]*m1.matrix[11] + matrix[15]*m1.matrix[15];
     }
     return ret;
 }
-/*
-Matrix4f Matrix4f::operator= (const Matrix4f& m1){
-    Matrix4f m;
-    std::copy(m1.matrix, m1.matrix+16, m.matrix);
-    return m;
-}
-*/
+
 
 void Matrix4f::PrintMatrix(){
     for (size_t i = 0; i < 4; i++)
@@ -62,39 +66,6 @@ void Matrix4f::InsertMatrix(float* m){
 }
 
 
-void Matrix4f::InsertNumber(int posX, int posY, float value)
-{
-    matrix[posX + posY*4] = value;
-}
-
-void Matrix4f::InsertMainDiagonal(float a, float b, float c, float d)
-{
-    matrix[0] = a;
-    matrix[5] = b;
-    matrix[10] = c;
-    matrix[15] = d;
-}
-
-void Matrix4f::InsertColumn(int column, float a, float b, float c, float d)
-{
-    matrix[column] = a;
-    matrix[column+4] = b;
-    matrix[column+8] = c;
-    matrix[column+12] = d;
-
-}
-
-void Matrix4f::InsertRow(int row, float a, float b, float c, float d)
-{
-    matrix[row*4] = a;
-    matrix[row*4 +1] = b;
-    matrix[row*4 +2] = c;
-    matrix[row*4 +3] = d;
-}
-
-
-
-
 
 MatrixLinkedList::MatrixLinkedList(){
     Matrix4f *m = new Matrix4f();
@@ -110,46 +81,68 @@ MatrixLinkedList::~MatrixLinkedList(){
         top = top->next;
         delete t;
     }
-    delete top;
+    if(top == nullptr)delete top;
     
 }
 
 
 
-void MatrixLinkedList::MultiplyFromRight(Matrix4f m1){
-    float m2[16];
-    std::copy(top->matrix,top->matrix+16,m2);
-    float sum;
-    for (size_t i = 0; i < 4; i++)
+void MatrixLinkedList::MultiplyFromRight(Matrix4f m2){
+    float m1[16];
+    std::copy(top->matrix,top->matrix+16,m1);
     {
-        for (size_t j = 0; j < 4; j++)
-        {
-            sum = 0;
-            for (size_t k = 0; k < 4; k++)
-            {
-                sum += m2[i*4+k] * m1.matrix[j+k*4];
-            }
-            top->matrix[i*4+j] = sum;
-        }   
+    top->matrix[0] = m1[0]*m2.matrix[0] + m1[1]*m2.matrix[4] + m1[2]*m2.matrix[8] + m1[3]*m2.matrix[12];
+    top->matrix[1] = m1[0]*m2.matrix[1] + m1[1]*m2.matrix[5] + m1[2]*m2.matrix[9] + m1[3]*m2.matrix[13];
+    top->matrix[2] = m1[0]*m2.matrix[2] + m1[1]*m2.matrix[6] + m1[2]*m2.matrix[10] + m1[3]*m2.matrix[14];
+    top->matrix[3] = m1[0]*m2.matrix[3] + m1[1]*m2.matrix[7] + m1[2]*m2.matrix[11] + m1[3]*m2.matrix[15];
+
+    top->matrix[4] = m1[4]*m2.matrix[0] + m1[5]*m2.matrix[4] + m1[6]*m2.matrix[8] + m1[7]*m2.matrix[12];
+    top->matrix[5] = m1[4]*m2.matrix[1] + m1[5]*m2.matrix[5] + m1[6]*m2.matrix[9] + m1[7]*m2.matrix[13];
+    top->matrix[6] = m1[4]*m2.matrix[2] + m1[5]*m2.matrix[6] + m1[6]*m2.matrix[10] + m1[7]*m2.matrix[14];
+    top->matrix[7] = m1[4]*m2.matrix[3] + m1[5]*m2.matrix[7] + m1[6]*m2.matrix[11] + m1[7]*m2.matrix[15];
+
+
+    top->matrix[8] = m1[8]*m2.matrix[0] + m1[9]*m2.matrix[4] + m1[10]*m2.matrix[8] + m1[11]*m2.matrix[12];
+    top->matrix[9] = m1[8]*m2.matrix[1] + m1[9]*m2.matrix[5] + m1[10]*m2.matrix[9] + m1[11]*m2.matrix[13];
+    top->matrix[10] = m1[8]*m2.matrix[2] + m1[9]*m2.matrix[6] + m1[10]*m2.matrix[10] + m1[11]*m2.matrix[14];
+    top->matrix[11] = m1[8]*m2.matrix[3] + m1[9]*m2.matrix[7] + m1[10]*m2.matrix[11] + m1[11]*m2.matrix[15];
+
+
+    top->matrix[12] = m1[12]*m2.matrix[0] + m1[13]*m2.matrix[4] + m1[14]*m2.matrix[8] + m1[15]*m2.matrix[12];
+    top->matrix[13] = m1[12]*m2.matrix[1] + m1[13]*m2.matrix[5] + m1[14]*m2.matrix[9] + m1[15]*m2.matrix[13];
+    top->matrix[14] = m1[12]*m2.matrix[2] + m1[13]*m2.matrix[6] + m1[14]*m2.matrix[10] + m1[15]*m2.matrix[14];
+    top->matrix[15] = m1[12]*m2.matrix[3] + m1[13]*m2.matrix[7] + m1[14]*m2.matrix[11] + m1[15]*m2.matrix[15];
     }
 }
 
 void MatrixLinkedList::MultiplyFromLeft(Matrix4f m1){
     float m2[16];
     std::copy(top->matrix,top->matrix+16,m2);
-    float sum;
-    for (size_t i = 0; i < 4; i++)
-    {
-        for (size_t j = 0; j < 4; j++)
-        {
-            sum = 0;
-            for (size_t k = 0; k < 4; k++)
-            {
-                sum += m1.matrix[i*4+k] *m2[j+k*4];
-            }
-            top->matrix[i*4+j] = sum;
-        }   
-    }
+{
+    top->matrix[0] = m1.matrix[0]*m2[0] + m1.matrix[1]*m2[4] + m1.matrix[2]*m2[8] + m1.matrix[3]*m2[12];
+    top->matrix[1] = m1.matrix[0]*m2[1] + m1.matrix[1]*m2[5] + m1.matrix[2]*m2[9] + m1.matrix[3]*m2[13];
+    top->matrix[2] = m1.matrix[0]*m2[2] + m1.matrix[1]*m2[6] + m1.matrix[2]*m2[10] + m1.matrix[3]*m2[14];
+    top->matrix[3] = m1.matrix[0]*m2[3] + m1.matrix[1]*m2[7] + m1.matrix[2]*m2[11] + m1.matrix[3]*m2[15];
+
+    top->matrix[4] = m1.matrix[4]*m2[0] + m1.matrix[5]*m2[4] + m1.matrix[6]*m2[8] + m1.matrix[7]*m2[12];
+    top->matrix[5] = m1.matrix[4]*m2[1] + m1.matrix[5]*m2[5] + m1.matrix[6]*m2[9] + m1.matrix[7]*m2[13];
+    top->matrix[6] = m1.matrix[4]*m2[2] + m1.matrix[5]*m2[6] + m1.matrix[6]*m2[10] + m1.matrix[7]*m2[14];
+    top->matrix[7] = m1.matrix[4]*m2[3] + m1.matrix[5]*m2[7] + m1.matrix[6]*m2[11] + m1.matrix[7]*m2[15];
+
+
+    top->matrix[8] = m1.matrix[8]*m2[0] + m1.matrix[9]*m2[4] + m1.matrix[10]*m2[8] + m1.matrix[11]*m2[12];
+    top->matrix[9] = m1.matrix[8]*m2[1] + m1.matrix[9]*m2[5] + m1.matrix[10]*m2[9] + m1.matrix[11]*m2[13];
+    top->matrix[10] = m1.matrix[8]*m2[2] + m1.matrix[9]*m2[6] + m1.matrix[10]*m2[10] + m1.matrix[11]*m2[14];
+    top->matrix[11] = m1.matrix[8]*m2[3] + m1.matrix[9]*m2[7] + m1.matrix[10]*m2[11] + m1.matrix[11]*m2[15];
+
+
+    top->matrix[12] = m1.matrix[12]*m2[0] + m1.matrix[13]*m2[4] + m1.matrix[14]*m2[8] + m1.matrix[15]*m2[12];
+    top->matrix[13] = m1.matrix[12]*m2[1] + m1.matrix[13]*m2[5] + m1.matrix[14]*m2[9] + m1.matrix[15]*m2[13];
+    top->matrix[14] = m1.matrix[12]*m2[2] + m1.matrix[13]*m2[6] + m1.matrix[14]*m2[10] + m1.matrix[15]*m2[14];
+    top->matrix[15] = m1.matrix[12]*m2[3] + m1.matrix[13]*m2[7] + m1.matrix[14]*m2[11] + m1.matrix[15]*m2[15];
+}
+
+
 }
 
 
