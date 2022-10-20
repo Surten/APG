@@ -1,6 +1,17 @@
 #include "VBO.h"
 
 
+
+void Viewport::CreateViewportMatrix(){
+    viewportMatrix.matrix[0] = width / 2;
+    viewportMatrix.matrix[3] = (width - 1) / 2;
+    viewportMatrix.matrix[5] = height / 2;
+    viewportMatrix.matrix[7] = (height - 1) / 2;
+    viewportMatrix.matrix[10] = (far - near) / 2;
+    viewportMatrix.matrix[10] = (far + near) / 2;
+    viewportMatrix.matrix[15] = 1;
+}
+
 void VBO::InsertVertex(float x, float y, float z, float w)
 {
     if(allocated < currIndex+8){

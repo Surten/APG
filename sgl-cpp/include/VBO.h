@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <algorithm>
+#include "Matrix4f.h"
 
 
 struct Viewport{
@@ -10,6 +11,13 @@ struct Viewport{
     int y;
     int width;
     int height;
+
+    float near;
+    float far;
+
+    Matrix4f viewportMatrix;
+
+    void CreateViewportMatrix();
 };
 
 

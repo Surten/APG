@@ -228,32 +228,38 @@ void sglVertex2f(float x, float y) {
 }
 
 void sglCircle(float x, float y, float z, float radius) {
-  //ConActive->modelViewStack.top 
-  //ConActive->projectionStack.top
+
   //calculate the scale from these matricies
-  float w=0;
-  ConActive->VertexShader(x,y,z,w)
-  ConActive->PerspectiveDivision(x,y,z,w)
-  ConActive->ViewPortTransform(x,y)
-  //ConActive->VertexShader;             after this we get clip coordinates   
-  //ConActive->PerspectiveDivision;      after this we get normalized device coordinates
-  //ConActive->ViewPortTransform;        after this we get window coordinates
-  //use these funcions to transform the center of the circle
+  float w=1;
+  ConActive->VertexShader(x,y,z,w);
+  ConActive->PerspectiveDivision(x,y,z,w);
+  ConActive->ViewPortTransform(x,y);
+
+  Matrix4f scalingMatrix = *ConActive->projectionStack.top * *ConActive->modelViewStack.top;
+  scalingMatrix = ConActive->viewport.viewportMatrix * scalingMatrix;
+
+  //ConActive->viewport.viewportMatrix.PrintMatrix();
+
+  float scalingFactor = sqrt((scalingMatrix.matrix[0] * scalingMatrix.matrix[5]) - (scalingMatrix.matrix[1] * scalingMatrix.matrix[4]));
+
   Rasterizer rasterizer(ConActive);
 
+  float Sradius = radius * scalingFactor;
   int xs, ys, p, fourX, fourY;
-  xs = 0; ys = radius;
-  p = 3 - 2*radius;
-  fourX = 0; fourY = 4*radius;
+  int ix = static_cast<int>(x);
+  int iy = static_cast<int>(y);
+  xs = 0; ys = Sradius;
+  p = 3 - 2 * Sradius;
+  fourX = 0; fourY = 4 * Sradius;
   while (xs <= ys) {
-    rasterizer.setPixel(x+xs,y+ys)
-    rasterizer.setPixel(x+ys,y+xs)
-    rasterizer.setPixel(x+xs,y-ys)
-    rasterizer.setPixel(x+ys,y-xs)
-    rasterizer.setPixel(x-xs,y+ys)
-    rasterizer.setPixel(x-ys,y+xs)
-    rasterizer.setPixel(x-xs,y-ys)
-    rasterizer.setPixel(x-ys,y-xs)
+    rasterizer.setPixel(ix+xs,iy+ys);
+    rasterizer.setPixel(ix+ys,iy+xs);
+    rasterizer.setPixel(ix+xs,iy-ys);
+    rasterizer.setPixel(ix+ys,iy-xs);
+    rasterizer.setPixel(ix-xs,iy+ys);
+    rasterizer.setPixel(ix-ys,iy+xs);
+    rasterizer.setPixel(ix-xs,iy-ys);
+    rasterizer.setPixel(ix-ys,iy-xs);
 
     if (p > 0) {
       p = p - fourY + 4;
@@ -477,6 +483,9 @@ void sglRotateY(float angle) {
 
 void sglOrtho(float left, float right, float bottom, float top, float near, float far) {
 
+  ConActive->viewport.far = far;
+  ConActive->viewport.near = near;
+
   Matrix4f orthoMat;
   orthoMat.matrix[0] = 2 / (right-left);
   orthoMat.matrix[5] = 2 / (top - bottom);
@@ -499,6 +508,10 @@ void sglOrtho(float left, float right, float bottom, float top, float near, floa
 }
 
 void sglFrustum(float left, float right, float bottom, float top, float near, float far) {
+
+  ConActive->viewport.far = far;
+  ConActive->viewport.near = near;
+
   Matrix4f m;
   m.matrix[0] = (2 * near)/(right - left);
   m.matrix[5] = (2 * near)/(top - bottom);
@@ -531,6 +544,8 @@ void sglViewport(int x, int y, int width, int height) {
   ConActive->viewport.y = y;
   ConActive->viewport.width = width;
   ConActive->viewport.height = height;
+
+  ConActive->viewport.CreateViewportMatrix();
 }
 
 //---------------------------------------------------------------------------
