@@ -231,13 +231,39 @@ void sglCircle(float x, float y, float z, float radius) {
   //ConActive->modelViewStack.top 
   //ConActive->projectionStack.top
   //calculate the scale from these matricies
-  
+  float w=0;
+  ConActive->VertexShader(x,y,z,w)
+  ConActive->PerspectiveDivision(x,y,z,w)
+  ConActive->ViewPortTransform(x,y)
   //ConActive->VertexShader;             after this we get clip coordinates   
   //ConActive->PerspectiveDivision;      after this we get normalized device coordinates
   //ConActive->ViewPortTransform;        after this we get window coordinates
   //use these funcions to transform the center of the circle
-
   Rasterizer rasterizer(ConActive);
+
+  int xs, ys, p, fourX, fourY;
+  xs = 0; ys = radius;
+  p = 3 - 2*radius;
+  fourX = 0; fourY = 4*radius;
+  while (xs <= ys) {
+    rasterizer.setPixel(x+xs,y+ys)
+    rasterizer.setPixel(x+ys,y+xs)
+    rasterizer.setPixel(x+xs,y-ys)
+    rasterizer.setPixel(x+ys,y-xs)
+    rasterizer.setPixel(x-xs,y+ys)
+    rasterizer.setPixel(x-ys,y+xs)
+    rasterizer.setPixel(x-xs,y-ys)
+    rasterizer.setPixel(x-ys,y-xs)
+
+    if (p > 0) {
+      p = p - fourY + 4;
+      fourY = fourY - 4;
+      ys = ys - 1;
+      }
+  p = p + fourX + 6;
+  fourX = fourX + 4;
+  xs = xs + 1;
+  }
   //use rasterizer.setPixel(x,y); to draw the pixel on screen
   //which pixels to draw you determine in the window coordinates which are ranging from 0 to Con->frameWidth/Height
 }
