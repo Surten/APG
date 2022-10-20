@@ -69,9 +69,7 @@ void sglInit(void) {
 void sglFinish(void) {
   //~init
   //free memory
-  for(Context c : ContextArray){
-    delete c.color_buffer;
-  }
+  ContextArray.clear();
   
 }
 
@@ -441,8 +439,8 @@ void sglRotate2D(float angle, float centerx, float centery) {
   
   sglTranslate(centerx, centery, 0);
   Matrix4f m;
-  float mat[16] = {cos(angle), -sin(angle), 0, 0,
-                   sin(angle), cos(angle) , 0, 0,
+  float mat[16] = {static_cast<float>(cos(angle)), static_cast<float>(-sin(angle)), 0, 0,
+                   static_cast<float>(sin(angle)), static_cast<float>(cos(angle)) , 0, 0,
                    0         , 0          , 1, 0,
                    0         , 0          , 0, 1 };
 
@@ -463,9 +461,9 @@ void sglRotate2D(float angle, float centerx, float centery) {
 }
 
 void sglRotateY(float angle) {
-  float mat[16] = {cos(angle), 0, -sin(angle), 0,
+  float mat[16] = {static_cast<float>(cos(angle)), 0, static_cast<float>(-sin(angle)), 0,
                    0,          1, 0,           0,
-                   sin(angle), 0, cos(angle) , 0,
+                   static_cast<float>(sin(angle)), 0, static_cast<float>(cos(angle)) , 0,
                    0,          0, 0,           1 };
   Matrix4f m;
   std::copy(mat,mat+16, m.matrix);

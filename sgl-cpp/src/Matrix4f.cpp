@@ -110,6 +110,7 @@ MatrixLinkedList::~MatrixLinkedList(){
         top = top->next;
         delete t;
     }
+    delete top;
     
 }
 

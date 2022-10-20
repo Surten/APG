@@ -6,7 +6,9 @@ Context::Context(int idd, int width, int heigth) : id(idd), frameWidth(width), f
  	color_buffer = new float[colorBufferSize];
 }
 
-Context::~Context(){}
+Context::~Context(){
+	delete color_buffer;
+}
 
 
 void Context::MatrixMultVector(Matrix4f& m, float& x, float& y, float& z, float& w){
