@@ -7,7 +7,7 @@ Context::Context(int idd, int width, int heigth) : id(idd), frameWidth(width), f
 }
 
 Context::~Context(){
-	if(color_buffer == nullptr)delete color_buffer;
+	delete[] color_buffer;
 }
 
 

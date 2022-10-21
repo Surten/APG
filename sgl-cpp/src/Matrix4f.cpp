@@ -75,14 +75,7 @@ MatrixLinkedList::MatrixLinkedList(){
 }
 
 MatrixLinkedList::~MatrixLinkedList(){
-    while (top->next != nullptr)
-    {
-        Matrix4f * t = top;
-        top = top->next;
-        delete t;
-    }
-    if(top == nullptr)delete top;
-    
+    while(size != 0)Pop();
 }
 
 
@@ -155,9 +148,11 @@ void MatrixLinkedList::Push(Matrix4f& m){
 }
 
 void MatrixLinkedList::Pop(){
-    if(top->next == nullptr) return;
+    if(top == nullptr) return;
     Matrix4f* m = top;
-    top = top->next;
+    if(top->next != nullptr){
+        top = top->next;
+    }
     delete m;
     size--;
 }

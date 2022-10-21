@@ -14,7 +14,7 @@
 #include <cmath>
 
 Context* ConActive = nullptr;
-std::vector<Context> ContextArray;
+std::vector<Context*> ContextArray;
 /// Current error code.
 static sglEErrorCode _libStatus = SGL_NO_ERROR;
 
@@ -69,20 +69,27 @@ void sglInit(void) {
 void sglFinish(void) {
   //~init
   //free memory
+  for(auto c : ContextArray){
+    delete c;
+  }
   ContextArray.clear();
+  ConActive = nullptr;
   
 }
 
 int sglCreateContext(int width, int height) {
-  Context c(static_cast<int>(ContextArray.size()), width, height);
+  Context *c = new Context(static_cast<int>(ContextArray.size()), width, height);
   ContextArray.push_back(c);
-  return c.id;
+  return c->id;
 }
 
 void sglDestroyContext(int id) {
   for (size_t i = 0; i < ContextArray.size(); i++)
   {
-    if(ContextArray.at(i).id == id) ContextArray.erase(ContextArray.begin() + i);
+    if(ContextArray.at(i)->id == id){ 
+      delete ContextArray.at(i);
+      ContextArray.erase(ContextArray.begin() + i);
+      }
   }
 }
 
@@ -90,7 +97,7 @@ void sglSetContext(int id) {
   
   for (size_t i = 0; i < ContextArray.size(); i++)
   {
-    if(ContextArray.at(i).id == id) ConActive = &ContextArray.at(i);
+    if(ContextArray.at(i)->id == id) ConActive = ContextArray.at(i);
   }
 }
 
@@ -268,8 +275,6 @@ void sglCircle(float x, float y, float z, float radius) {
   fourX = fourX + 4;
   xs = xs + 1;
   }
-  //use rasterizer.setPixel(x,y); to draw the pixel on screen
-  //which pixels to draw you determine in the window coordinates which are ranging from 0 to Con->frameWidth/Height
 }
 
 void sglEllipse(float x, float y, float z, float a, float b) {
