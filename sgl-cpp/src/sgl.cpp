@@ -291,6 +291,8 @@ void sglEllipse(float x, float y, float z, float a, float b) {
 }
 
 void sglArc(float x, float y, float z, float radius, float from, float to) {
+
+  //fix the arc to render the shorter part instead
   sglBegin(SGL_LINE_STRIP);
   //float pi = 2*acos(0.0);
   float t = (to-from)/40;
@@ -303,13 +305,6 @@ void sglArc(float x, float y, float z, float radius, float from, float to) {
   sglEnd();
 }
 
-void sglLine(float x_beggin,float y_beggin,float x_end,float y_end){
-
-}
-
-void sglPoint(float x,float y){
-  
-}
 //---------------------------------------------------------------------------
 // Transform functions
 //---------------------------------------------------------------------------
