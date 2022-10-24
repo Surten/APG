@@ -4,10 +4,13 @@ Context::Context(int idd, int width, int heigth) : id(idd), frameWidth(width), f
 {
 	colorBufferSize = heigth*width*3;
  	color_buffer = new float[colorBufferSize];
+ 	depthBufferSize = heigth*width;
+ 	depth_buffer = new float[depthBufferSize];
 }
 
 Context::~Context(){
 	delete[] color_buffer;
+	delete[] depth_buffer;
 }
 
 

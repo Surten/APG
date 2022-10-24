@@ -568,13 +568,13 @@ void sglPointSize(float size) {
 }
 
 void sglEnable(sglEEnableFlags cap) {
-  if(cap = SGL_DEPTH_TEST){
+  if(cap == SGL_DEPTH_TEST){
     ConActive->depthActive = true;
   }
 }
 
 void sglDisable(sglEEnableFlags cap) {
-  if(cap = SGL_DEPTH_TEST){
+  if(cap == SGL_DEPTH_TEST){
     ConActive->depthActive = false;
   }
 }

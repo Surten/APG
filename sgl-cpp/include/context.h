@@ -13,11 +13,14 @@ class Context{
 public:
 	int id;
 	float* color_buffer;
+	float* depth_buffer;
 	int frameWidth;
 	int frameHeight;
 	unsigned int colorBufferSize;
 	float currentColor[3];
+	float currentDepth;
 	float clearColor[3];
+	float clearDepth;
 	sglEElementType EleType;
 	VBO vbo;
 	sglEMatrixMode MatrixMode;

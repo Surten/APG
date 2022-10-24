@@ -6,11 +6,21 @@ Rasterizer::Rasterizer(Context* ContextActive){
 }
 
 void Rasterizer::setPixel(int x, int y){
-    
-    if(x < Con->frameWidth && x >= 0 && y < Con->frameHeight && y >= 0){
-        Con->color_buffer[3*(y*Con->frameWidth + x)] = Con->currentColor[0];
-        Con->color_buffer[3*(y*Con->frameWidth + x) + 1] = Con->currentColor[1];
-        Con->color_buffer[3*(y*Con->frameWidth + x) + 2] = Con->currentColor[2];
+    if(Con->depthActive){
+        if (Con->depth_buffer[y*Con->frameWidth +x] < Con->currentDepth){
+            if(x < Con->frameWidth && x >= 0 && y < Con->frameHeight && y >= 0){
+                Con->color_buffer[3*(y*Con->frameWidth + x)] = Con->currentColor[0];
+                Con->color_buffer[3*(y*Con->frameWidth + x) + 1] = Con->currentColor[1];
+                Con->color_buffer[3*(y*Con->frameWidth + x) + 2] = Con->currentColor[2];
+            } 
+        }
+    }
+    else {
+        if(x < Con->frameWidth && x >= 0 && y < Con->frameHeight && y >= 0){
+            Con->color_buffer[3*(y*Con->frameWidth + x)] = Con->currentColor[0];
+            Con->color_buffer[3*(y*Con->frameWidth + x) + 1] = Con->currentColor[1];
+            Con->color_buffer[3*(y*Con->frameWidth + x) + 2] = Con->currentColor[2];
+        }
     }
 }
 
