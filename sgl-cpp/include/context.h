@@ -17,16 +17,16 @@ public:
 	int frameWidth;
 	int frameHeight;
 	unsigned int colorBufferSize;
+	unsigned int depthBufferSize;
 	float currentColor[3];
-	float currentDepth;
 	float clearColor[3];
-	float clearDepth;
 	sglEElementType EleType;
 	VBO vbo;
 	sglEMatrixMode MatrixMode;
-	bool depthActive;
+	bool depthActive = false;
 	Viewport viewport;
 	int pointSize = 1;
+	sglEAreaMode areaMode = SGL_FILL;
 
 	MatrixLinkedList modelViewStack;
 	MatrixLinkedList projectionStack;
@@ -38,26 +38,29 @@ public:
 	 * Multiplies Vector by Matrix
 	 * Vector is on the right of the multiplication sign
 	*/
-	void MatrixMultVector(Matrix4f& m, float& x, float& y, float& z, float& w);
+
+	Matrix4f GetPVMMatrix();
+
+	void MatrixMultVector(Matrix4f& m, Vertex &v);
 
 
 	/**
 	 * Part of transformation matrix
 	 * TODO merge all transforms together
 	*/
-	void VertexShader(float& x, float& y, float& z, float& w);
+	void VertexShader(Matrix4f& pvm, Vertex &v);
 
 	/**
 	 * Part of transformation matrix
 	 * TODO merge all transforms together
 	*/
-	void PerspectiveDivision(float& x, float& y, float& z, float& w);
+	void PerspectiveDivision(Vertex &v);
 	
 	/**
 	 * Part of transformation matrix
 	 * TODO merge all transforms together
 	*/
-	void ViewPortTransform(float& x, float& y);
+	void ViewPortTransform(Vertex &v);
 
 
 };

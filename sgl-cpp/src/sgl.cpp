@@ -121,20 +121,21 @@ void sglClearColor(float r, float g, float b, float alpha) {
 }
 
 void sglClear(unsigned what) {
-    switch (what)
+
+  if ((what & SGL_COLOR_BUFFER_BIT) == SGL_COLOR_BUFFER_BIT){
+    for (size_t i = 0; i < ConActive->colorBufferSize; i+=3)
     {
-    case SGL_COLOR_BUFFER_BIT:
-      for (size_t i = 0; i < ConActive->colorBufferSize; i+=3)
-      {
-        ConActive->color_buffer[i] = ConActive->clearColor[0];
-        ConActive->color_buffer[i+1] = ConActive->clearColor[1];
-        ConActive->color_buffer[i+2] = ConActive->clearColor[2];
-      }
-      break;
-    
-    case SGL_DEPTH_BUFFER_BIT:
-      break;
+      ConActive->color_buffer[i] = ConActive->clearColor[0];
+      ConActive->color_buffer[i+1] = ConActive->clearColor[1];
+      ConActive->color_buffer[i+2] = ConActive->clearColor[2];
     }
+  }
+  if ((what & SGL_DEPTH_BUFFER_BIT) == SGL_DEPTH_BUFFER_BIT){
+    for (size_t i = 0; i < ConActive->depthBufferSize; i++)
+    {
+      ConActive->depth_buffer[i] = 1;
+    }
+  }
 }
 
 void sglBegin(sglEElementType mode) {
@@ -143,14 +144,12 @@ void sglBegin(sglEElementType mode) {
 }
 void sglEnd(void) {
   VBO *v = &ConActive->vbo;
-
-  for (size_t i = 0; i < v->GetSize(); i+=4)
+  Matrix4f pvm = ConActive->GetPVMMatrix();
+  for (size_t i = 0; i < v->GetSize(); i++)
   {
-    ConActive->VertexShader(v->vertex_buffer.at(i), v->vertex_buffer.at(i+1),
-          v->vertex_buffer.at(i+2), v->vertex_buffer.at(i+3));
-    ConActive->PerspectiveDivision(v->vertex_buffer.at(i), v->vertex_buffer.at(i+1),
-          v->vertex_buffer.at(i+2), v->vertex_buffer.at(i+3));
-    ConActive->ViewPortTransform(v->vertex_buffer.at(i), v->vertex_buffer.at(i+1));
+    ConActive->VertexShader(pvm, v->vertex_buffer.at(i));
+    ConActive->PerspectiveDivision(v->vertex_buffer.at(i));
+    ConActive->ViewPortTransform(v->vertex_buffer.at(i));
   }
 
   Rasterizer rasterizer(ConActive);
@@ -158,52 +157,83 @@ void sglEnd(void) {
   switch (ConActive->EleType)
   {
   case SGL_POINTS:
-    for (size_t i = 0; i < v->GetSize(); i += 4)
+    for (size_t i = 0; i < v->GetSize(); i++)
     {
-      rasterizer.DrawPoint(static_cast<int>(v->vertex_buffer.at(i)), static_cast<int>(v->vertex_buffer.at(i+1)));
+      rasterizer.DrawPoint(v->vertex_buffer.at(i));
     }
     break;
 
   case SGL_LINES:
 
-    for (size_t i = 0; i < v->GetSize(); i += 8)
+    for (size_t i = 0; i < static_cast<int>(v->GetSize())-1; i+=2)
     {
-      rasterizer.DrawLine(static_cast<int>(v->vertex_buffer.at(i)), static_cast<int>(v->vertex_buffer.at(i+1)),
-          static_cast<int>(v->vertex_buffer.at(i+4)), static_cast<int>(v->vertex_buffer.at(i+5)));
+      rasterizer.DrawLine(v->vertex_buffer.at(i), v->vertex_buffer.at(i+1));
     }
     break;
 
   case SGL_LINE_STRIP:
 
-      for (size_t i = 0; i < v->GetSize()-4; i += 4)
+      for (size_t i = 0; i < static_cast<int>(v->GetSize())-1; i++)
       {
-        rasterizer.DrawLine(static_cast<int>(v->vertex_buffer.at(i)), static_cast<int>(v->vertex_buffer.at(i+1)),
-            static_cast<int>(v->vertex_buffer.at(i+4)), static_cast<int>(v->vertex_buffer.at(i+5)));
+        rasterizer.DrawLine(v->vertex_buffer.at(i), v->vertex_buffer.at(i+1));
       }
     break;
 
   case SGL_LINE_LOOP:
-    for (size_t i = 0; i < v->GetSize()-4; i += 4)
+    for (size_t i = 0; i < static_cast<int>(v->GetSize())-1; i++)
     {
-      rasterizer.DrawLine(static_cast<int>(v->vertex_buffer.at(i)), static_cast<int>(v->vertex_buffer.at(i+1)),
-          static_cast<int>(v->vertex_buffer.at(i+4)), static_cast<int>(v->vertex_buffer.at(i+5)));
+      rasterizer.DrawLine(v->vertex_buffer.at(i), v->vertex_buffer.at(i+1));
     }
-    rasterizer.DrawLine(static_cast<int>(v->vertex_buffer.at(v->GetSize()-4)), static_cast<int>(v->vertex_buffer.at(v->GetSize()-3)),
-          static_cast<int>(v->vertex_buffer.at(0)), static_cast<int>(v->vertex_buffer.at(1)));
+    rasterizer.DrawLine(v->vertex_buffer.at(static_cast<int>(v->GetSize())-1), v->vertex_buffer.at(0));
     break;
 
   case SGL_TRIANGLES:
-      for (size_t i = 0; i < v->GetSize(); i += 12)
+    switch (ConActive->areaMode)
+    {
+    case SGL_POINT:
+      for (size_t i = 0; i < v->GetSize(); i++)
       {
-        rasterizer.DrawTriangle(
-            static_cast<int>(v->vertex_buffer.at(i)), static_cast<int>(v->vertex_buffer.at(i+1)),
-            static_cast<int>(v->vertex_buffer.at(i+4)), static_cast<int>(v->vertex_buffer.at(i+5)),
-            static_cast<int>(v->vertex_buffer.at(i+8)), static_cast<int>(v->vertex_buffer.at(i+9)));
+        rasterizer.DrawPoint(v->vertex_buffer.at(i));
       }
+      break;
+    
+    case SGL_LINE:
+      for (size_t i = 0; i < v->GetSize()-2; i += 3)
+      {
+        rasterizer.DrawLine(v->vertex_buffer.at(i), v->vertex_buffer.at(i+1));
+        rasterizer.DrawLine(v->vertex_buffer.at(i+1), v->vertex_buffer.at(i+2));
+        rasterizer.DrawLine(v->vertex_buffer.at(i+2), v->vertex_buffer.at(i));
+      }
+      break;
+
+    case SGL_FILL:
+      rasterizer.ScanLineFill(*v);
+      break;
+    }
     break;
 
   case SGL_POLYGON:
-    /* code */
+    switch (ConActive->areaMode)
+    {
+    case SGL_POINT:
+      for (size_t i = 0; i < v->GetSize(); i++)
+      {
+        rasterizer.DrawPoint(v->vertex_buffer.at(i));
+      }
+      break;
+    
+    case SGL_LINE:
+      for (size_t i = 0; i < static_cast<int>(v->GetSize())-1; i++)
+      {
+        rasterizer.DrawLine(v->vertex_buffer.at(i), v->vertex_buffer.at(i+1));
+      }
+      rasterizer.DrawLine(v->vertex_buffer.at(static_cast<int>(v->GetSize())-1), v->vertex_buffer.at(0));
+      break;
+
+    case SGL_FILL:
+      rasterizer.ScanLineFill(*v);
+      break;
+    }
     break;
 
   case SGL_AREA_LIGHT:
@@ -234,11 +264,17 @@ void sglVertex2f(float x, float y) {
 
 void sglCircle(float x, float y, float z, float radius) {
 
+  if(ConActive->areaMode == SGL_POINT){
+    ConActive->vbo.InsertVertex(x, y, z, 1);
+    sglEnd();
+  }
+
   //calculate the scale from these matricies
-  float w=1;
-  ConActive->VertexShader(x,y,z,w);
-  ConActive->PerspectiveDivision(x,y,z,w);
-  ConActive->ViewPortTransform(x,y);
+  Vertex v(x,y,z,1);
+  Matrix4f pvm = ConActive->GetPVMMatrix();
+  ConActive->VertexShader(pvm,v);
+  ConActive->PerspectiveDivision(v);
+  ConActive->ViewPortTransform(v);
 
   Matrix4f scalingMatrix = *ConActive->projectionStack.top * *ConActive->modelViewStack.top;
   scalingMatrix = ConActive->viewport.viewportMatrix * scalingMatrix;
@@ -251,20 +287,20 @@ void sglCircle(float x, float y, float z, float radius) {
 
   float Sradius = radius * scalingFactor;
   int xs, ys, p, fourX, fourY;
-  int ix = static_cast<int>(x);
-  int iy = static_cast<int>(y);
-  xs = 0; ys = Sradius;
-  p = 3 - 2 * Sradius;
-  fourX = 0; fourY = 4 * Sradius;
+  int ix = static_cast<int>(v.x);
+  int iy = static_cast<int>(v.y);
+  xs = 0; ys = static_cast<int>(Sradius);
+  p = 3 - 2 * ys;
+  fourX = 0; fourY = 4 * ys;
   while (xs <= ys) {
-    rasterizer.setPixel(ix+xs,iy+ys);
-    rasterizer.setPixel(ix+ys,iy+xs);
-    rasterizer.setPixel(ix+xs,iy-ys);
-    rasterizer.setPixel(ix+ys,iy-xs);
-    rasterizer.setPixel(ix-xs,iy+ys);
-    rasterizer.setPixel(ix-ys,iy+xs);
-    rasterizer.setPixel(ix-xs,iy-ys);
-    rasterizer.setPixel(ix-ys,iy-xs);
+    rasterizer.setPixel(SCVertex(ix+xs,iy+ys, v.z));
+    rasterizer.setPixel(SCVertex(ix+ys,iy+xs, v.z));
+    rasterizer.setPixel(SCVertex(ix+xs,iy-ys, v.z));
+    rasterizer.setPixel(SCVertex(ix+ys,iy-xs, v.z));
+    rasterizer.setPixel(SCVertex(ix-xs,iy+ys, v.z));
+    rasterizer.setPixel(SCVertex(ix-ys,iy+xs, v.z));
+    rasterizer.setPixel(SCVertex(ix-xs,iy-ys, v.z));
+    rasterizer.setPixel(SCVertex(ix-ys,iy-xs, v.z));
 
     if (p > 0) {
       p = p - fourY + 4;
@@ -278,29 +314,30 @@ void sglCircle(float x, float y, float z, float radius) {
 }
 
 void sglEllipse(float x, float y, float z, float a, float b) {
+  if(ConActive->areaMode == SGL_POINT){
+    ConActive->vbo.InsertVertex(x, y, z, 1);
+    sglEnd();
+  }
+
   sglBegin(SGL_LINE_LOOP);
-  float pi = static_cast<float>(2*acos(0.0));
-  float t = pi / 20;
-  int j = 0;
-  for (float i = 0; i < 2*pi; i+=t)
+  double pi = static_cast<float>(2*acos(0.0));
+  double t = pi / 20;
+  for (double i = 0; i < 2*pi; i+=t)
   {
-      ConActive->vbo.InsertVertexAt(x+(a*cos(i))  , y+(b*sin(i)), z, 1, 0+j);
-      j++;
+      ConActive->vbo.InsertVertex(static_cast<float>(x+(a*cos(i)))  , static_cast<float>(y+(b*sin(i))), z, 1);
   }
   sglEnd();
 }
 
 void sglArc(float x, float y, float z, float radius, float from, float to) {
-
-  //fix the arc to render the shorter part instead
   sglBegin(SGL_LINE_STRIP);
-  //float pi = 2*acos(0.0);
-  float t = (to-from)/40;
-  int j = 0;
-  for (float i = from; i < to; i+=t)
+  if(to < from){
+    std::swap(from, to);
+  }
+  double t = (to-from)/40;
+  for (double i = from; i < to; i+=t)
   {
-      ConActive->vbo.InsertVertexAt(x+(radius*cos(i))  , y+(radius*sin(i)), z, 1, 0+j);
-      j++;
+      ConActive->vbo.InsertVertex(static_cast<float>(x+(radius*cos(i)))  , static_cast<float>(y+(radius*sin(i))), z, 1);
   }
   sglEnd();
 }
@@ -481,8 +518,6 @@ void sglRotateY(float angle) {
 
 void sglOrtho(float left, float right, float bottom, float top, float near, float far) {
 
-  ConActive->viewport.far = far;
-  ConActive->viewport.near = near;
 
   Matrix4f orthoMat;
   orthoMat.matrix[0] = 2 / (right-left);
@@ -506,9 +541,6 @@ void sglOrtho(float left, float right, float bottom, float top, float near, floa
 }
 
 void sglFrustum(float left, float right, float bottom, float top, float near, float far) {
-
-  ConActive->viewport.far = far;
-  ConActive->viewport.near = near;
 
   Matrix4f m;
   m.matrix[0] = (2 * near)/(right - left);
@@ -538,10 +570,10 @@ void sglFrustum(float left, float right, float bottom, float top, float near, fl
 }
 
 void sglViewport(int x, int y, int width, int height) {
-  ConActive->viewport.x = x;
-  ConActive->viewport.y = y;
-  ConActive->viewport.width = width;
-  ConActive->viewport.height = height;
+  ConActive->viewport.x = (float)x;
+  ConActive->viewport.y = (float)y;
+  ConActive->viewport.width = (float)width;
+  ConActive->viewport.height = (float)height;
 
   ConActive->viewport.CreateViewportMatrix();
 }
@@ -556,20 +588,22 @@ void sglColor3f(float r, float g, float b) {
   ConActive->currentColor[2] = b;
 }
 
-void sglAreaMode(sglEAreaMode mode) {}
+void sglAreaMode(sglEAreaMode mode) {
+  ConActive->areaMode = mode;
+}
 
 void sglPointSize(float size) {
   ConActive->pointSize = static_cast<int>(size);
 }
 
 void sglEnable(sglEEnableFlags cap) {
-  if(cap == SGL_DEPTH_TEST){
+  if ((cap & SGL_DEPTH_TEST) == SGL_DEPTH_TEST){
     ConActive->depthActive = true;
   }
 }
 
 void sglDisable(sglEEnableFlags cap) {
-  if(cap == SGL_DEPTH_TEST){
+  if ((cap & SGL_DEPTH_TEST) == SGL_DEPTH_TEST){
     ConActive->depthActive = false;
   }
 }
