@@ -159,31 +159,36 @@ void sglEnd(void) {
   case SGL_POINTS:
     for (size_t i = 0; i < v->GetSize(); i++)
     {
+      if(v->vertex_buffer.at(i).w == 0) continue;
       rasterizer.DrawPoint(v->vertex_buffer.at(i));
     }
     break;
 
   case SGL_LINES:
 
-    for (size_t i = 0; i < static_cast<int>(v->GetSize())-1; i+=2)
+    for (size_t i = 0; i < v->GetSize()-1; i+=2)
     {
+      if(v->vertex_buffer.at(i).w == 0 || v->vertex_buffer.at(i+1).w == 0) continue;
       rasterizer.DrawLine(v->vertex_buffer.at(i), v->vertex_buffer.at(i+1));
     }
     break;
 
   case SGL_LINE_STRIP:
 
-      for (size_t i = 0; i < static_cast<int>(v->GetSize())-1; i++)
+      for (size_t i = 0; i < v->GetSize()-1; i++)
       {
+        if(v->vertex_buffer.at(i).w == 0 || v->vertex_buffer.at(i+1).w == 0) continue;
         rasterizer.DrawLine(v->vertex_buffer.at(i), v->vertex_buffer.at(i+1));
       }
     break;
 
   case SGL_LINE_LOOP:
-    for (size_t i = 0; i < static_cast<int>(v->GetSize())-1; i++)
+    for (size_t i = 0; i < v->GetSize()-1; i++)
     {
+      if(v->vertex_buffer.at(i).w == 0 || v->vertex_buffer.at(i+1).w == 0) continue;
       rasterizer.DrawLine(v->vertex_buffer.at(i), v->vertex_buffer.at(i+1));
     }
+    if(v->vertex_buffer.at(static_cast<int>(v->GetSize())-1).w == 0 || v->vertex_buffer.at(0).w == 0) break;
     rasterizer.DrawLine(v->vertex_buffer.at(static_cast<int>(v->GetSize())-1), v->vertex_buffer.at(0));
     break;
 
@@ -191,15 +196,19 @@ void sglEnd(void) {
     switch (ConActive->areaMode)
     {
     case SGL_POINT:
-      for (size_t i = 0; i < v->GetSize(); i++)
+      for (size_t i = 0; i < v->GetSize()-2; i+=3)
       {
+        if(v->vertex_buffer.at(i).w == 0 || v->vertex_buffer.at(i+1).w == 0 || v->vertex_buffer.at(i+2).w == 0) continue;
         rasterizer.DrawPoint(v->vertex_buffer.at(i));
+        rasterizer.DrawPoint(v->vertex_buffer.at(i+1));
+        rasterizer.DrawPoint(v->vertex_buffer.at(i+2));
       }
       break;
     
     case SGL_LINE:
       for (size_t i = 0; i < v->GetSize()-2; i += 3)
       {
+        if(v->vertex_buffer.at(i).w == 0 || v->vertex_buffer.at(i+1).w == 0 || v->vertex_buffer.at(i+2).w == 0) continue;
         rasterizer.DrawLine(v->vertex_buffer.at(i), v->vertex_buffer.at(i+1));
         rasterizer.DrawLine(v->vertex_buffer.at(i+1), v->vertex_buffer.at(i+2));
         rasterizer.DrawLine(v->vertex_buffer.at(i+2), v->vertex_buffer.at(i));
@@ -207,7 +216,15 @@ void sglEnd(void) {
       break;
 
     case SGL_FILL:
-      rasterizer.ScanLineFill(*v);
+      for (size_t i = 0; i < v->GetSize()-2; i += 3)
+      {
+        if(v->vertex_buffer.at(i).w == 0 || v->vertex_buffer.at(i+1).w == 0 || v->vertex_buffer.at(i+2).w == 0) continue;
+        int yMax = -1, yMin = INT32_MAX;
+        std::vector<SLFEdge> edges = rasterizer.CreateEdges(v->vertex_buffer.at(i), v->vertex_buffer.at(i+1), v->vertex_buffer.at(i+2), yMax, yMin);
+        rasterizer.ScanLineFill(edges, yMax, yMin);
+      }
+    
+      
       break;
     }
     break;
@@ -218,6 +235,7 @@ void sglEnd(void) {
     case SGL_POINT:
       for (size_t i = 0; i < v->GetSize(); i++)
       {
+        if(v->vertex_buffer.at(i).w == 0) break;
         rasterizer.DrawPoint(v->vertex_buffer.at(i));
       }
       break;
@@ -225,13 +243,21 @@ void sglEnd(void) {
     case SGL_LINE:
       for (size_t i = 0; i < static_cast<int>(v->GetSize())-1; i++)
       {
+        if(v->vertex_buffer.at(i).w == 0 || v->vertex_buffer.at(i+1).w == 0){v->ClearVBO(); return;}
         rasterizer.DrawLine(v->vertex_buffer.at(i), v->vertex_buffer.at(i+1));
       }
+      if(v->vertex_buffer.at(static_cast<int>(v->GetSize())-1).w == 0 || v->vertex_buffer.at(0).w == 0)
       rasterizer.DrawLine(v->vertex_buffer.at(static_cast<int>(v->GetSize())-1), v->vertex_buffer.at(0));
       break;
 
     case SGL_FILL:
-      rasterizer.ScanLineFill(*v);
+      for (size_t i = 0; i < v->GetSize(); i++)
+      {
+        if(v->vertex_buffer.at(i).w == 0) {v->ClearVBO(); return;}
+      }
+      int yMax = -1, yMin = INT32_MAX;
+      std::vector<SLFEdge> edges = rasterizer.CreateEdges(*v, yMax, yMin);
+      rasterizer.ScanLineFill(edges, yMax, yMin);
       break;
     }
     break;
@@ -478,15 +504,32 @@ void sglLoadIdentity(void) {
 }
 
 void sglLoadMatrix(const float *matrix) {
+  float temp[16];
 
+  temp[0] = matrix[0];
+  temp[1] = matrix[4];
+  temp[2] = matrix[8];
+  temp[3] = matrix[12];
+  temp[4] = matrix[1];
+  temp[5] = matrix[5];
+  temp[6] = matrix[9];
+  temp[7] = matrix[13];
+  temp[8] = matrix[2];
+  temp[9] = matrix[6];
+  temp[10] = matrix[10];
+  temp[11] = matrix[14];
+  temp[12] = matrix[3];
+  temp[13] = matrix[7];
+  temp[14] = matrix[11];
+  temp[15] = matrix[15];
   switch (ConActive->MatrixMode)
   {
   case SGL_MODELVIEW:
-    std::copy(matrix,matrix+16,ConActive->modelViewStack.top->matrix);
+    std::copy(temp,temp+16,ConActive->modelViewStack.top->matrix);
     break;
 
   case SGL_PROJECTION:
-    std::copy(matrix,matrix+16,ConActive->projectionStack.top->matrix);
+    std::copy(temp,temp+16,ConActive->projectionStack.top->matrix);
     break;
   }
 }
@@ -494,7 +537,26 @@ void sglLoadMatrix(const float *matrix) {
 void sglMultMatrix(const float *matrix) {
   Matrix4f m;
   float temp[16];
-  std::copy(matrix,matrix+16,temp);
+  temp[0] = matrix[0];
+  temp[1] = matrix[4];
+  temp[2] = matrix[8];
+  temp[3] = matrix[12];
+  temp[4] = matrix[1];
+  temp[5] = matrix[5];
+  temp[6] = matrix[9];
+  temp[7] = matrix[13];
+  temp[8] = matrix[2];
+  temp[9] = matrix[6];
+  temp[10] = matrix[10];
+  temp[11] = matrix[14];
+  temp[12] = matrix[3];
+  temp[13] = matrix[7];
+  temp[14] = matrix[11];
+  temp[15] = matrix[15];
+  
+  
+
+  //std::copy(matrix,matrix+16,temp);
   m.InsertMatrix(temp);
   switch (ConActive->MatrixMode)
   {

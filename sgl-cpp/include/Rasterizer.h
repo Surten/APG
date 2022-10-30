@@ -16,6 +16,8 @@ struct SLFEdge{
 
     void SetXIntersection();
 
+
+
     SLFEdge(float x1, float y1, float z1, float x2, float y2, float z2);
 };
 
@@ -35,8 +37,8 @@ struct SCVertex{
     SCVertex(int xx, int yy, float zz) : x(xx), y(yy), z(zz){}
 
     SCVertex(Vertex v){
-        x = static_cast<int>(std::round(v.x));
-        y = static_cast<int>(std::round(v.y));
+        x = static_cast<int>(v.x+0.5f);
+        y = static_cast<int>(v.y+0.5f);
         z = v.z;
     }
 };
@@ -72,13 +74,17 @@ public:
     /**
      * Insert point in the frame buffer using the coordinates
     */
-    void setPixel(SCVertex &v);
+    void setPixel(SCVertex v);
 
     void Bresenham3D(SCVertex v1, const SCVertex v2);
 
     void FragmentShader(SCVertex &v);
 
-    void ScanLineFill(VBO &vbo);
+    std::vector<SLFEdge> CreateEdges(VBO &vbo, int &yMax, int &yMin);
+    std::vector<SLFEdge> CreateEdges(Vertex &v1, Vertex &v2, Vertex &v3, int &yMax, int &yMin);
+    std::vector<SLFEdge> CreateEdges(std::vector<Vertex> &vec, int &yMax, int &yMin);
+
+    void ScanLineFill(std::vector<SLFEdge> &edges, int yMax, int yMin);
     
     Context* Con;
     Rasterizer(Context* ContextActive);

@@ -5,7 +5,7 @@ Rasterizer::Rasterizer(Context* ContextActive){
     Con = ContextActive;
 }
 
-void Rasterizer::setPixel(SCVertex &v){
+void Rasterizer::setPixel(SCVertex v){
     if(v.x < Con->frameWidth && v.x >= 0 && v.y < Con->frameHeight && v.y >= 0){
         if(Con->depthActive)
         {
@@ -87,7 +87,7 @@ void Rasterizer::Bresenham3D(SCVertex v1, const SCVertex v2){
 
     dx = v2.x - v1.x;
     dy = v2.y - v1.y;
-    dz = v2.z - v1.z;
+    dz = static_cast<int>(v2.z - v1.z);
     x_inc = (dx < 0) ? -1 : 1;
     l = abs(dx);
     y_inc = (dy < 0) ? -1 : 1;
@@ -216,24 +216,14 @@ void MySwap(SLFEdge &e1, SLFEdge &e2){
     e2 = e;
 }
 
-void Rasterizer::ScanLineFill(VBO &vbo){
-
+std::vector<SLFEdge> Rasterizer::CreateEdges(VBO &vbo, int &yMax, int &yMin){
     std::vector<SLFEdge> edges;
-    int yMax = -1000, yMin = INT32_MAX;
-    int activeIndexEnd = 0;
-    int activeIndexBegin = 0;
-    int edgesSize;
-    float z, zStep;
-    
-    
+
     //make edges from VBO
     for (int i = 0; i < static_cast<int>(vbo.GetSize())-1; i++)
     {
+        
         if(static_cast<int>(vbo.vertex_buffer.at(i).y) != static_cast<int>(vbo.vertex_buffer.at(i+1).y)){
-/*             if(Con->depthActive){
-                vbo.vertex_buffer.at(i).z = 1.0f / vbo.vertex_buffer.at(i).z;
-                vbo.vertex_buffer.at(i+1).z = 1.0f / vbo.vertex_buffer.at(i+1).z;
-            } */
             SLFEdge e(vbo.vertex_buffer.at(i).x, vbo.vertex_buffer.at(i).y, vbo.vertex_buffer.at(i).z, vbo.vertex_buffer.at(i+1).x, vbo.vertex_buffer.at(i+1).y, vbo.vertex_buffer.at(i+1).z);
             edges.push_back(e);
             if(yMax < e.yUp) yMax = e.yUp;
@@ -246,7 +236,63 @@ void Rasterizer::ScanLineFill(VBO &vbo){
             edges.push_back(e);
             if(yMax < e.yUp) yMax = e.yUp;
             if(yMin > e.yLow) yMin = e.yLow;
+    }
+
+    return edges;
+}
+std::vector<SLFEdge> Rasterizer::CreateEdges(Vertex &v1, Vertex &v2, Vertex &v3, int &yMax, int &yMin){
+    std::vector<SLFEdge> edges;
+
+    if(static_cast<int>(v1.y) != static_cast<int>(v2.y)){
+        SLFEdge e(v1.x, v1.y, v1.z, v2.x, v2.y, v2.z);
+        edges.push_back(e);
+        if(yMax < e.yUp) yMax = e.yUp;
+        if(yMin > e.yLow) yMin = e.yLow;
+    }
+    if(static_cast<int>(v2.y) != static_cast<int>(v3.y)){
+        SLFEdge e(v2.x, v2.y, v2.z, v3.x, v3.y, v3.z);
+        edges.push_back(e);
+        if(yMax < e.yUp) yMax = e.yUp;
+        if(yMin > e.yLow) yMin = e.yLow;
+    }
+    if(static_cast<int>(v3.y) != static_cast<int>(v1.y)){
+        SLFEdge e(v3.x, v3.y, v3.z, v1.x, v1.y, v1.z);
+        edges.push_back(e);
+        if(yMax < e.yUp) yMax = e.yUp;
+        if(yMin > e.yLow) yMin = e.yLow;
+    }
+    return edges;
+}
+std::vector<SLFEdge> Rasterizer::CreateEdges(std::vector<Vertex> &vec, int &yMax, int &yMin){
+    std::vector<SLFEdge> edges;
+
+    //make edges from VBO
+    for (int i = 0; i < static_cast<int>(vec.size())-1; i++)
+    {
+        if(static_cast<int>(vec.at(i).y) != static_cast<int>(vec.at(i+1).y)){
+            SLFEdge e(vec.at(i).x, vec.at(i).y, vec.at(i).z, vec.at(i+1).x, vec.at(i+1).y, vec.at(i+1).z);
+            edges.push_back(e);
+            if(yMax < e.yUp) yMax = e.yUp;
+            if(yMin > e.yLow) yMin = e.yLow;
         }
+    }
+    //add last edge to make full polygon
+    if(static_cast<int>(vec.at(vec.size()-1).y) != static_cast<int>(vec.at(0).y)){
+            SLFEdge e(vec.at(vec.size()-1).x, vec.at(vec.size()-1).y, vec.at(vec.size()-1).z, vec.at(0).x, vec.at(0).y, vec.at(0).z);
+            edges.push_back(e);
+            if(yMax < e.yUp) yMax = e.yUp;
+            if(yMin > e.yLow) yMin = e.yLow;
+    }
+    return edges;
+}
+
+void Rasterizer::ScanLineFill(std::vector<SLFEdge> &edges, int yMax, int yMin){
+    int activeIndexEnd = 0;
+    int activeIndexBegin = 0;
+    int edgesSize;
+    float z = 0, zStep = 0;
+
+    
     //sort array by yUp
     edgesSize = static_cast<int>(edges.size());
     std::sort(edges.begin(), edges.end(), predicate);
@@ -285,8 +331,8 @@ void Rasterizer::ScanLineFill(VBO &vbo){
             for (int k = edges[j].xIntersection; k <= edges[j+1].xIntersection; k++)
             {
                 //if(Con->depthActive && edges[j].zIntersection < edges[j+1].zIntersection && edges[j+1].zIntersection < z) std::cout << k << " " << z << std::endl;
-                setPixel(SCVertex(k, i, Con->depthActive ? (z) : 0));
-                if(Con->depthActive)z+=zStep;
+                setPixel(SCVertex(k, i, z));
+                z+=zStep;
             }
             
         }     
@@ -294,6 +340,11 @@ void Rasterizer::ScanLineFill(VBO &vbo){
     }
 
 }
+
+
+
+
+
 
 
 void Rasterizer::FragmentShader(SCVertex &v){
