@@ -11,13 +11,15 @@ void Rasterizer::setPixel(SCVertex &v){
         {
             if(Con->depth_buffer[v.y*Con->frameWidth + v.x] > v.z)
             {
+ /*                if(Con->depth_buffer[v.y*Con->frameWidth + v.x] != INFINITY){
+                    std::cout << v.z << "     " << Con->depth_buffer[v.y*Con->frameWidth + v.x] << std::endl;
+                    std::cout << Con->currentColor[0] << " " << Con->currentColor[1] << " " << Con->currentColor[2] << " " <<std::endl;
+                } */
                 Con->depth_buffer[v.y*Con->frameWidth + v.x] = v.z;
                 FragmentShader(v);
             }
         }
         else{FragmentShader(v);}
-        
-        
     }
 
 }
@@ -155,35 +157,35 @@ void Rasterizer::DrawTriangle(SCVertex v1, SCVertex v2, SCVertex v3){
     //use color buffer in Con->color_buffer as an output
 }
 
-struct SLFEdge{
-    int yUp;
-    int yLow;
-    int xIntersection;
-    float xUp;
-    float xStep;
 
-    void SetXIntersection();
-
-    SLFEdge(float x1, float y1, float x2, float y2);
-};
 
 void SLFEdge::SetXIntersection(){
-    xIntersection = static_cast<int>(xUp + xStep + 0.5f);
+    xUp += xStep; 
+    xIntersection = static_cast<int>(xUp);
+    zUp += zStep;
+    zIntersection = zUp;
+    
 }
 
-SLFEdge::SLFEdge(float x1, float y1, float x2, float y2){
+SLFEdge::SLFEdge(float x1, float y1, float z1, float x2, float y2, float z2){
     if(y1 > y2){
         yUp = static_cast<int>(y1);
         xUp = x1;
-        xIntersection = static_cast<int>(x1);
-        yLow = static_cast<int>(y2)-1;
-        xStep = (x2 - x1) / static_cast<float>(yUp - yLow);
+        yLow = static_cast<int>(y2)+1;
+        xStep = (x2 - x1) / static_cast<float>(y1 - y2+1.0f);
+        xIntersection = static_cast<int>(x1-xStep);
+        zUp = z1;
+        zStep = (z2 - z1) / static_cast<float>(y1 - y2+1.0f);
+        zIntersection = z1-zStep;
     }else{
         yUp = static_cast<int>(y2);
         xUp = x2;
-        xIntersection = static_cast<int>(x2);
-        yLow = static_cast<int>(y1)-1;
-        xStep = (x1 - x2) / static_cast<float>(yUp - yLow);
+        yLow = static_cast<int>(y1)+1;
+        xStep = (x1 - x2) / static_cast<float>(y2 - y1+1.0f);
+        xIntersection = static_cast<int>(x2-xStep);
+        zUp = z2;
+        zStep = (z1 - z2) / static_cast<float>(y2 - y1+1.0f);
+        zIntersection = z2-zStep;
     }
 }
 
@@ -206,7 +208,12 @@ void ShakerSort(std::vector<SLFEdge> &edges, int start, int stop){
             }
         }
     }
-    
+}
+
+void MySwap(SLFEdge &e1, SLFEdge &e2){
+    SLFEdge e = e1;
+    e1 = e2;
+    e2 = e;
 }
 
 void Rasterizer::ScanLineFill(VBO &vbo){
@@ -215,58 +222,74 @@ void Rasterizer::ScanLineFill(VBO &vbo){
     int yMax = -1000, yMin = INT32_MAX;
     int activeIndexEnd = 0;
     int activeIndexBegin = 0;
+    int edgesSize;
+    float z, zStep;
     
+    
+    //make edges from VBO
     for (int i = 0; i < static_cast<int>(vbo.GetSize())-1; i++)
     {
         if(static_cast<int>(vbo.vertex_buffer.at(i).y) != static_cast<int>(vbo.vertex_buffer.at(i+1).y)){
-            SLFEdge e(vbo.vertex_buffer.at(i).x, vbo.vertex_buffer.at(i).y, vbo.vertex_buffer.at(i+1).x, vbo.vertex_buffer.at(i+1).y);
+/*             if(Con->depthActive){
+                vbo.vertex_buffer.at(i).z = 1.0f / vbo.vertex_buffer.at(i).z;
+                vbo.vertex_buffer.at(i+1).z = 1.0f / vbo.vertex_buffer.at(i+1).z;
+            } */
+            SLFEdge e(vbo.vertex_buffer.at(i).x, vbo.vertex_buffer.at(i).y, vbo.vertex_buffer.at(i).z, vbo.vertex_buffer.at(i+1).x, vbo.vertex_buffer.at(i+1).y, vbo.vertex_buffer.at(i+1).z);
             edges.push_back(e);
             if(yMax < e.yUp) yMax = e.yUp;
             if(yMin > e.yLow) yMin = e.yLow;
         }
     }
-
+    //add last edge to make full polygon
     if(static_cast<int>(vbo.vertex_buffer.at(vbo.GetSize()-1).y) != static_cast<int>(vbo.vertex_buffer.at(0).y)){
-            SLFEdge e(vbo.vertex_buffer.at(vbo.GetSize()-1).x, vbo.vertex_buffer.at(vbo.GetSize()-1).y, vbo.vertex_buffer.at(0).x, vbo.vertex_buffer.at(0).y);
+            SLFEdge e(vbo.vertex_buffer.at(vbo.GetSize()-1).x, vbo.vertex_buffer.at(vbo.GetSize()-1).y, vbo.vertex_buffer.at(vbo.GetSize()-1).z, vbo.vertex_buffer.at(0).x, vbo.vertex_buffer.at(0).y, vbo.vertex_buffer.at(0).z);
             edges.push_back(e);
             if(yMax < e.yUp) yMax = e.yUp;
             if(yMin > e.yLow) yMin = e.yLow;
         }
-
-
+    //sort array by yUp
+    edgesSize = static_cast<int>(edges.size());
     std::sort(edges.begin(), edges.end(), predicate);
 
+    //for each y beetween top and bottom point of polygon
     for (int i = yMax; i >= yMin; i--)
     {
-        while (i <= edges.at(activeIndexEnd).yUp && activeIndexEnd+1 <edges.size())
+        //add next element to active array
+        while (activeIndexEnd != edgesSize && i <= edges.at(activeIndexEnd).yUp)
         {
             activeIndexEnd++;
         }
         
-
+        // remove inactive elements from active array
         for (int j = activeIndexBegin; j < activeIndexEnd; j++)
         {
             if(i < edges.at(j).yLow){
-                std::swap(edges.begin()+activeIndexBegin, edges.begin()+j);
+                MySwap(edges[activeIndexBegin], edges[j]);
                 activeIndexBegin++;
+            }else{
+                //if not removing, calculate xIntersetion
+                edges.at(j).SetXIntersection();
             }
-            edges.at(j).SetXIntersection();
         }
-
+        //shake sort the active list
         ShakerSort(edges, activeIndexBegin, activeIndexEnd);
-        
+
+        //for each 2 edges do:
         for (int j = activeIndexBegin; j < activeIndexEnd; j+=2)
         {
-            for (int k = edges[j].xIntersection; k < edges[j+1].xIntersection; k++)
+            if(Con->depthActive){
+                z = edges[j].zIntersection;
+                zStep = (edges[j+1].zIntersection - edges[j].zIntersection) / (edges[j+1].xIntersection - edges[j].xIntersection + 1);
+            }
+            //for each x between the 2 edges : render
+            for (int k = edges[j].xIntersection; k <= edges[j+1].xIntersection; k++)
             {
-                setPixel(SCVertex(k,i,0.5));
+                //if(Con->depthActive && edges[j].zIntersection < edges[j+1].zIntersection && edges[j+1].zIntersection < z) std::cout << k << " " << z << std::endl;
+                setPixel(SCVertex(k, i, Con->depthActive ? (z) : 0));
+                if(Con->depthActive)z+=zStep;
             }
             
-        }
-        if(i == 351){
-            continue;
-        }
-        
+        }     
 
     }
 

@@ -133,7 +133,7 @@ void sglClear(unsigned what) {
   if ((what & SGL_DEPTH_BUFFER_BIT) == SGL_DEPTH_BUFFER_BIT){
     for (size_t i = 0; i < ConActive->depthBufferSize; i++)
     {
-      ConActive->depth_buffer[i] = 1;
+      ConActive->depth_buffer[i] = INFINITY;
     }
   }
 }
@@ -264,11 +264,6 @@ void sglVertex2f(float x, float y) {
 
 void sglCircle(float x, float y, float z, float radius) {
 
-  if(ConActive->areaMode == SGL_POINT){
-    ConActive->vbo.InsertVertex(x, y, z, 1);
-    sglEnd();
-  }
-
   //calculate the scale from these matricies
   Vertex v(x,y,z,1);
   Matrix4f pvm = ConActive->GetPVMMatrix();
@@ -292,54 +287,137 @@ void sglCircle(float x, float y, float z, float radius) {
   xs = 0; ys = static_cast<int>(Sradius);
   p = 3 - 2 * ys;
   fourX = 0; fourY = 4 * ys;
-  while (xs <= ys) {
-    rasterizer.setPixel(SCVertex(ix+xs,iy+ys, v.z));
-    rasterizer.setPixel(SCVertex(ix+ys,iy+xs, v.z));
-    rasterizer.setPixel(SCVertex(ix+xs,iy-ys, v.z));
-    rasterizer.setPixel(SCVertex(ix+ys,iy-xs, v.z));
-    rasterizer.setPixel(SCVertex(ix-xs,iy+ys, v.z));
-    rasterizer.setPixel(SCVertex(ix-ys,iy+xs, v.z));
-    rasterizer.setPixel(SCVertex(ix-xs,iy-ys, v.z));
-    rasterizer.setPixel(SCVertex(ix-ys,iy-xs, v.z));
 
-    if (p > 0) {
-      p = p - fourY + 4;
-      fourY = fourY - 4;
-      ys = ys - 1;
+  switch (ConActive->areaMode)
+  {
+  case SGL_POINT:
+    rasterizer.setPixel(SCVertex(ix,iy,v.z));
+    break;
+  
+  case SGL_LINE:
+    while (xs <= ys) {
+      rasterizer.setPixel(SCVertex(ix+xs,iy+ys, v.z));
+      rasterizer.setPixel(SCVertex(ix-xs,iy+ys, v.z)); 
+
+      rasterizer.setPixel(SCVertex(ix+ys,iy+xs, v.z));
+      rasterizer.setPixel(SCVertex(ix-ys,iy+xs, v.z));
+
+      rasterizer.setPixel(SCVertex(ix+ys,iy-xs, v.z));
+      rasterizer.setPixel(SCVertex(ix-ys,iy-xs, v.z));
+
+      rasterizer.setPixel(SCVertex(ix+xs,iy-ys, v.z));
+      rasterizer.setPixel(SCVertex(ix-xs,iy-ys, v.z));
+
+      if (p > 0) {
+        p = p - fourY + 4;
+        fourY = fourY - 4;
+        ys = ys - 1;
       }
-  p = p + fourX + 6;
-  fourX = fourX + 4;
-  xs = xs + 1;
+      p = p + fourX + 6;
+      fourX = fourX + 4;
+      xs = xs + 1;
+    }
+    break;
+
+  case SGL_FILL:
+    while (xs <= ys) {
+
+      for (int i = ix-xs; i < ix+xs; i++)
+      {
+        rasterizer.setPixel(SCVertex(i,iy+ys, v.z));
+      }
+      for (int i = ix-ys; i < ix+ys; i++)
+      {
+        rasterizer.setPixel(SCVertex(i,iy+xs, v.z));
+      }
+      for (int i = ix-ys; i < ix+ys; i++)
+      {
+        rasterizer.setPixel(SCVertex(i,iy-xs, v.z));
+      }
+      for (int i = ix-xs; i < ix+xs; i++)
+      {
+        rasterizer.setPixel(SCVertex(i,iy-ys, v.z));
+      }
+
+      if (p > 0) {
+        p = p - fourY + 4;
+        fourY = fourY - 4;
+        ys = ys - 1;
+      }
+      p = p + fourX + 6;
+      fourX = fourX + 4;
+      xs = xs + 1;
+    }
+    break;
+
   }
+  
 }
 
 void sglEllipse(float x, float y, float z, float a, float b) {
-  if(ConActive->areaMode == SGL_POINT){
+
+  switch (ConActive->areaMode)
+  {
+  case SGL_POINT:
+    sglBegin(SGL_POINTS);
     ConActive->vbo.InsertVertex(x, y, z, 1);
     sglEnd();
+    return;
+
+  case SGL_LINE:
+    sglBegin(SGL_LINE_LOOP);
+    break;
+
+  case SGL_FILL:
+    sglBegin(SGL_POLYGON);
+    break;
   }
 
-  sglBegin(SGL_LINE_LOOP);
-  double pi = static_cast<float>(2*acos(0.0));
-  double t = pi / 20;
-  for (double i = 0; i < 2*pi; i+=t)
-  {
-      ConActive->vbo.InsertVertex(static_cast<float>(x+(a*cos(i)))  , static_cast<float>(y+(b*sin(i))), z, 1);
-  }
+    double pi = static_cast<float>(2*acos(0.0));
+    double t = pi / 20;
+    for (double i = 0; i < 2*pi; i+=t)
+    {
+        ConActive->vbo.InsertVertex(static_cast<float>(x+(a*cos(i)))  , static_cast<float>(y+(b*sin(i))), z, 1);
+    }
+
   sglEnd();
 }
 
 void sglArc(float x, float y, float z, float radius, float from, float to) {
-  sglBegin(SGL_LINE_STRIP);
-  if(to < from){
-    std::swap(from, to);
-  }
-  double t = (to-from)/40;
-  for (double i = from; i < to; i+=t)
+  switch (ConActive->areaMode)
   {
-      ConActive->vbo.InsertVertex(static_cast<float>(x+(radius*cos(i)))  , static_cast<float>(y+(radius*sin(i))), z, 1);
+  case SGL_POINT:
+    sglBegin(SGL_POINTS);
+    ConActive->vbo.InsertVertex(x, y, z, 1);
+    sglEnd();
+    return;
+    break;
+
+  case SGL_LINE:
+    sglBegin(SGL_LINE_STRIP);
+
+    break;
+
+  case SGL_FILL:
+    ConActive->vbo.InsertVertex(x, y, z, 1);
+    sglBegin(SGL_POLYGON);
+    break;
   }
+
+    if(to < from){
+    std::swap(from, to);
+    }
+    double t = (to-from)/40;
+    for (double i = from; i < to; i+=t)
+    {
+      ConActive->vbo.InsertVertex(static_cast<float>(x+(radius*cos(i)))  , static_cast<float>(y+(radius*sin(i))), z, 1);
+    }
+
   sglEnd();
+
+
+
+
 }
 
 //---------------------------------------------------------------------------
@@ -541,17 +619,16 @@ void sglOrtho(float left, float right, float bottom, float top, float near, floa
 }
 
 void sglFrustum(float left, float right, float bottom, float top, float near, float far) {
-
   Matrix4f m;
-  m.matrix[0] = (2 * near)/(right - left);
-  m.matrix[5] = (2 * near)/(top - bottom);
+  m.matrix[0] = (2.0f * near)/(right - left);
+  m.matrix[5] = (2.0f * near)/(top - bottom);
 
 
   m.matrix[2] =((right + left) / (right - left));
   m.matrix[6] =((top + bottom) / (top - bottom));
-  m.matrix[10] =-((far + near) / (far - near));
+  m.matrix[10] =(-(far + near) / (far - near));
 
-  m.matrix[11] = -(2 * far * near)/(far - near);
+  m.matrix[11] = -(2.0f * far * near)/(far - near);
 
   m.matrix[14] = -1;
   m.matrix[15] = 0;

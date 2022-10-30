@@ -24,6 +24,17 @@ void VBO::InsertVertex(float x, float y, float z, float w)
 
 }
 
+void VBO::InsertVertex(Vertex v){
+
+    if(allocated == currIndex){
+        vertex_buffer.push_back(v);
+        allocated++;
+        currIndex++;
+    }else{
+        vertex_buffer.at(currIndex++) = v;
+    }
+}
+
 void VBO::ClearVBO(){
     currIndex = 0;
     //do I need to erase everything??

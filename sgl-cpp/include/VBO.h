@@ -26,6 +26,7 @@ struct Vertex{
     float z;
     float w;
     Vertex(){}
+    //Vertex(Vertex& v){x=v.x;y=v.y;z=v.z;w=v.w;}
     Vertex(float xx, float yy, float zz, float ww) : x(xx), y(yy), z(zz), w(ww){}
 };
 
@@ -48,6 +49,7 @@ public:
      * Inserts vertex at the end of VBO
     */
     void InsertVertex(float x, float y, float z, float w);
+    void InsertVertex(Vertex v);
 
 
     /**

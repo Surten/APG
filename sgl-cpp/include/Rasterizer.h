@@ -4,6 +4,21 @@
 #include "context.h"
 
 
+struct SLFEdge{
+    int yUp;
+    int yLow;
+    int xIntersection;
+    float xUp;
+    float xStep;
+    float zIntersection;
+    float zUp;
+    float zStep;
+
+    void SetXIntersection();
+
+    SLFEdge(float x1, float y1, float z1, float x2, float y2, float z2);
+};
+
 
 struct SCVertex{
     int x;
