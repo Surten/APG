@@ -198,13 +198,13 @@ void ShakerSort(std::vector<SLFEdge> &edges, int start, int stop){
         for (j = i+1; j < stop; j++)
         {
             if(edges[j].xIntersection < edges[j-1].xIntersection){
-                std::swap(edges[j].xIntersection, edges[j-1].xIntersection);
+                std::swap(edges[j], edges[j-1]);
             }
         }
         for (k = stop-1; k > i; k--)
         {
             if(edges[k].xIntersection < edges[k-1].xIntersection){
-                std::swap(edges[k].xIntersection, edges[k-1].xIntersection);
+                std::swap(edges[k], edges[k-1]);
             }
         }
     }
