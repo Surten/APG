@@ -4,6 +4,9 @@
 #include "context.h"
 
 
+/**
+ * Edge structure for the scanline fill as described in the lecture
+*/
 struct SLFEdge{
     int yUp;
     int yLow;
@@ -21,7 +24,9 @@ struct SLFEdge{
     SLFEdge(float x1, float y1, float z1, float x2, float y2, float z2);
 };
 
-
+/**
+ * Screen space coordinates vertex... ususally used right before rasterization
+*/
 struct SCVertex{
     int x;
     int y;
@@ -76,16 +81,28 @@ public:
     */
     void setPixel(SCVertex v);
 
+    /**
+     * the line drawing
+     * TODO : make my own
+    */
     void Bresenham3D(SCVertex v1, const SCVertex v2);
 
     void FragmentShader(SCVertex &v);
 
+
+    /**
+     * Creates edge structure for scanline algorithm
+    */
     std::vector<SLFEdge> CreateEdges(VBO &vbo, int &yMax, int &yMin);
     std::vector<SLFEdge> CreateEdges(Vertex &v1, Vertex &v2, Vertex &v3, int &yMax, int &yMin);
     std::vector<SLFEdge> CreateEdges(std::vector<Vertex> &vec, int &yMax, int &yMin);
 
+    /**
+     * Filling algorithm
+    */
     void ScanLineFill(std::vector<SLFEdge> &edges, int yMax, int yMin);
     
+    //active context of the current scene
     Context* Con;
     Rasterizer(Context* ContextActive);
     

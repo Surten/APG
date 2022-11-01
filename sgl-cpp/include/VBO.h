@@ -20,6 +20,9 @@ struct Viewport{
     void CreateViewportMatrix();
 };
 
+/**
+ * Verticies in VBO
+*/
 struct Vertex{
     float x;
     float y;
