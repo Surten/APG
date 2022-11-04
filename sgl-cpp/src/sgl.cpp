@@ -13,7 +13,7 @@
 
 #include <cmath>
 
-#define TWO_PI 6.2831853
+#define TWO_PI 6.2831853f
 
 Context* ConActive = nullptr;
 std::vector<Context*> ContextArray;
