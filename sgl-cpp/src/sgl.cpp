@@ -13,6 +13,8 @@
 
 #include <cmath>
 
+#define TWO_PI 6.2831853
+
 Context* ConActive = nullptr;
 std::vector<Context*> ContextArray;
 /// Current error code.
@@ -144,6 +146,12 @@ void sglBegin(sglEElementType mode) {
 }
 void sglEnd(void) {
   VBO *v = &ConActive->vbo;
+
+  if (v->GetSize() == 0){
+    v->ClearVBO();
+    return;
+  }
+
   Matrix4f pvm = ConActive->GetPVMMatrix();
   for (size_t i = 0; i < v->GetSize(); i++)
   {
@@ -430,13 +438,22 @@ void sglArc(float x, float y, float z, float radius, float from, float to) {
     break;
   }
 
-    if(to < from){
-    std::swap(from, to);
+    // add two pi if from > to
+    float realAngle;
+    if (to > from){
+        realAngle = fabs(to - from);
+    } else {
+        realAngle = fabs(TWO_PI + to - from);
     }
-    double t = (to-from)/40;
-    for (double i = from; i < to; i+=t)
+
+    int numSegments = static_cast<int>(roundf(40 * realAngle / TWO_PI));
+    float angleDiff = realAngle / numSegments;
+    float angle = from;
+    // need n+1 vertices for n segments
+    for (double i = 0; i < numSegments + 1; i++)
     {
-      ConActive->vbo.InsertVertex(static_cast<float>(x+(radius*cos(i)))  , static_cast<float>(y+(radius*sin(i))), z, 1);
+      ConActive->vbo.InsertVertex(static_cast<float>(x+(radius*cos(angle)))  , static_cast<float>(y+(radius*sin(angle))), z, 1);
+      angle += angleDiff;
     }
 
   sglEnd();
