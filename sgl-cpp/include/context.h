@@ -5,6 +5,8 @@
 #include "sgl.h"
 #include "VBO.h"
 #include "Matrix4f.h"
+#include "Ray.h"
+#include "Primitive.h"
 
 /**
  * Class containing all info about one drawing
@@ -30,6 +32,9 @@ public:
 
 	MatrixLinkedList modelViewStack;
 	MatrixLinkedList projectionStack;
+
+	bool beginSceneActive = false;
+	std::vector<Primitive> primitiveList;
 
 	Context(int idd, int width, int heigth);
 	~Context();

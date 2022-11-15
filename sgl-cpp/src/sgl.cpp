@@ -10,6 +10,8 @@
 #include "sgl.h"
 #include "context.h"
 #include "Rasterizer.h"
+#include "Ray.h"
+#include "Primitive.h"
 
 #include <cmath>
 
@@ -768,15 +770,26 @@ void sglDisable(sglEEnableFlags cap) {
 // RayTracing oriented functions
 //---------------------------------------------------------------------------
 
-void sglBeginScene() {}
+void sglBeginScene() {
+  ConActive->beginSceneActive = true;
+  // TODO: handle invalid calls
+}
 
-void sglEndScene() {}
+void sglEndScene() {
+  ConActive->beginSceneActive = false;
+  // TODO: handle invalid calls
+}
 
 void sglSphere(const float x,
                const float y,
                const float z,
                const float radius)
-{}
+{
+  // TODO: handle calls out of beginScene()
+  SphereP sphere = SphereP{x, y, z, radius,
+    ConActive->currentColor[0], ConActive->currentColor[2], ConActive->currentColor[2]};
+  ConActive->primitiveList.push_back(sphere);
+}
 
 void sglMaterial(const float r,
                  const float g,
@@ -796,7 +809,26 @@ void sglPointLight(const float x,
                    const float b)
 {}
 
-void sglRayTraceScene() {}
+void sglRayTraceScene() {
+  // TODO: add triangles to ConActive->primitiveList in  sglEnd()
+  Matrix4f projectionInv = Matrix4f(*ConActive->projectionStack.top);
+  projectionInv.invert();
+  for (int i = 0; i < ConActive->frameWidth; i++){
+    for (int j = 0; j < ConActive->frameHeight; j++){
+      for (auto& p : ConActive->primitiveList){
+        // FIXME: direction won't be (i, j, 0). Unproject
+        // TODO: z-buffer
+        Ray ray{.0f, .0f, .0f, static_cast<float>(i), static_cast<float>(j), 0.0f, 0.0f, INFINITY};
+        float t;
+        bool hit = p.traceRay(ray, &t);
+        // TODO: write color back to color buffer
+        // TODO: depth buffer
+        // TODO: lighting
+      }
+    }
+    
+  }
+}
 
 void sglRasterizeScene() {}
 

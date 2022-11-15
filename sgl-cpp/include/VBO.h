@@ -31,6 +31,10 @@ struct Vertex{
     Vertex(){}
     //Vertex(Vertex& v){x=v.x;y=v.y;z=v.z;w=v.w;}
     Vertex(float xx, float yy, float zz, float ww) : x(xx), y(yy), z(zz), w(ww){}
+
+    Vertex& operator-(Vertex const &v){
+        return Vertex(x - v.x, y - v.y, z - v.z, w - v.w);
+    }
 };
 
 
