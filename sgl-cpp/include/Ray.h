@@ -54,6 +54,10 @@ inline float dot(Vertex& v2, Ray& r1){
     return r1.dx * v2.x + r1.dy * v2.y + r1.dz * v2.z;
 }
 
+inline float dot(Ray& r1, Ray& r2){
+    return r1.dx * r2.dx + r1.dy * r2.dy + r1.dz * r2.dz;
+}
+
 inline Vertex cross(Vertex &v1, Vertex &v2){
     // TODO: w division?
     return Vertex{

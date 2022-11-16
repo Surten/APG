@@ -140,18 +140,23 @@ void MatrixLinkedList::MultiplyFromLeft(Matrix4f m1){
 
 
 // inverse matrix computation using gauss_jacobi method 
-// source: N.R. in C
-// if matrix is regular = computatation successfull = returns 0
-// in case of singular matrix returns 1
-//https://cent.felk.cvut.cz/courses/APG/invert-matrix.cpp
-int
-Matrix4f::invert()
+  // source: N.R. in C
+  // if matrix is regular = computatation successfull = returns 0
+  // in case of singular matrix returns 1
+int Matrix4f::invert()
 {
     int indxc[4],indxr[4],ipiv[4];
     int i,icol,irow,j,k,l,ll,n;
     float big,dum,pivinv,temp;
     // satisfy the compiler
     icol = irow = 0;
+
+    float x[4][4];
+    for (int _r = 0; _r < 4; _r++){
+        for (int _c = 0; _c < 4; _c++){
+            x[_c][_r] = matrix[_r * 4 + _c];
+        }
+    }
         
     // the size of the matrix
     n = 4;
@@ -168,9 +173,9 @@ Matrix4f::invert()
                 {
                 if (ipiv[k] == 0)
                     {
-                    if (fabs(matrix[4*j+k]) >= big)
+                    if (fabs(x[k][j]) >= big)
                         {
-                        big = fabs(matrix[4*j+k]);
+                        big = fabs(x[k][j]);
                         irow = j;
                         icol = k;
                         }
@@ -184,36 +189,28 @@ Matrix4f::invert()
             {
             for ( l = 0 ; l<n ; l++)
                 {
-                //temp = x[l][icol];
-                temp = matrix[4*l + icol];
-                //x[l][icol] = x[l][irow];
-                matrix[4*l + icol] = matrix[4*l + irow];
-                //x[l][irow] = temp;
-                matrix[4*l + irow] = temp;
+                temp = x[l][icol];
+                x[l][icol] = x[l][irow];
+                x[l][irow] = temp;
                 }
             }
         indxr[i] = irow;
         indxc[i] = icol;
-        if (matrix[4*icol + icol] == 0.0)
+        if (x[icol][icol] == 0.0)
             return 1; /* singular matrix */
                 
-        // pivinv = 1.0 / x[icol][icol];
-        pivinv = 1.0 / matrix[4 * icol + icol];
-        matrix[4*icol + icol] = 1.0 ;
+        pivinv = 1.0 / x[icol][icol];
+        x[icol][icol] = 1.0 ;
         for ( l = 0 ; l<n ; l++)
-            // x[l][icol] = x[l][icol] * pivinv ;
-            matrix[4*l + icol] = matrix[4*l + icol] * pivinv ;
+            x[l][icol] = x[l][icol] * pivinv ;
                 
         for (ll = 0 ; ll < n ; ll++)
             if (ll != icol)
             {
-                // dum = x[icol][ll];
-                dum = matrix[4*icol + ll];
-                // x[icol][ll] = 0.0;
-                matrix[4*icol + ll] = 0.0;
+                dum = x[icol][ll];
+                x[icol][ll] = 0.0;
                 for ( l = 0 ; l<n ; l++)
-                // x[l][ll] = x[l][ll] - x[l][icol] * dum ;
-                matrix[4*l + ll] = matrix[4*l + ll] - matrix[4*l + icol] * dum ;
+                x[l][ll] = x[l][ll] - x[l][icol] * dum ;
             }
         }
     for ( l = n; l--; )
@@ -221,13 +218,18 @@ Matrix4f::invert()
         if (indxr[l] != indxc[l])
             for ( k = 0; k<n ; k++)
             {
-                // temp = x[indxr[l]][k];
-                temp = matrix[4*indxr[l]+k];
-                // x[indxr[l]][k] = x[indxc[l]][k];
-                matrix[4*indxr[l] + k] = matrix[4*indxc[l] + k];
-                matrix[4*indxc[l] + k] = temp;
+                temp = x[indxr[l]][k];
+                x[indxr[l]][k] = x[indxc[l]][k];
+                x[indxc[l]][k] = temp;
             }
         }
+
+
+    for (int _r = 0; _r < 4; _r++){
+        for (int _c = 0; _c < 4; _c++){
+            matrix[_r * 4 + _c] = x[_c][_r];
+        }
+    }
         
     return 0 ; // matrix is regular .. inversion has been succesfull
 }

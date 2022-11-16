@@ -4,9 +4,9 @@
 
 void Viewport::CreateViewportMatrix(){
     viewportMatrix.matrix[0] = width * 0.5f;
-    viewportMatrix.matrix[3] = (width - 1) * 0.5f;
+    viewportMatrix.matrix[3] = x + width * 0.5f;
     viewportMatrix.matrix[5] = height * 0.5f;
-    viewportMatrix.matrix[7] = (height - 1) * 0.5f;
+    viewportMatrix.matrix[7] = y + height * 0.5f;
     viewportMatrix.matrix[10] = 1;
     viewportMatrix.matrix[15] = 1;
 }

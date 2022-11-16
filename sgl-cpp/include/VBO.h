@@ -36,11 +36,15 @@ struct Vertex{
         return Vertex(x - v.x, y - v.y, z - v.z, w - v.w);
     }
 
-    void normalize(){
+    void perspDivide(){
         x /= w;
         y /= w;
         z /= w;
         w = 1.0f;
+    }
+
+    void normalize(){
+        perspDivide();
         float len = sqrtf(x*x + y*y + z*z);
         x /= len;
         y /= len;

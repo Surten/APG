@@ -32,21 +32,51 @@ bool TraingleP::traceRay(Ray ray, float* tHit){
 }
 
 
-bool SphereP::traceRay(Ray ray, float* tHit){
-    Vertex distance = ray - position;
-    float b = dot(distance, ray);
-    float c = dot(distance, distance) - radius * radius;
-    float d = b * b - c;
-
-    if (d > 0){
-        *tHit = -b - sqrtf(d);
-        if (*tHit < 0.0f){
-            *tHit = -b + sqrtf(d);
-        }
-        return true;
-    }
-	return false;
+bool solveQuadratic(const float &a, const float &b, const float &c, float &x0, float &x1) 
+{ 
+    float discr = b * b - 4 * a * c; 
+    if (discr < 0) return false; 
+    else if (discr == 0) x0 = x1 = - 0.5 * b / a; 
+    else { 
+        float q = (b > 0) ? 
+            -0.5 * (b + sqrt(discr)) : 
+            -0.5 * (b - sqrt(discr)); 
+        x0 = q / a; 
+        x1 = c / q; 
+    } 
+    if (x0 > x1) std::swap(x0, x1); 
+ 
+    return true; 
 }
+
+// https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
+bool SphereP::traceRay(Ray ray, float* tHit){
+    float t0, t1;
+
+    Vertex L = ray - center;
+    float a = dot(ray, ray);
+    float b = 2 * dot(ray, L);
+    float c = dot(L, L) - radius *  radius;
+
+    if (!solveQuadratic(a, b, c, t0, t1)) return false; 
+
+    if (t0 > t1){
+        std::swap(t0, t1);
+    }
+
+    if (t0 < 0){
+        t0 = t1;
+        if (t0 < 0){
+            return false;
+        }
+    }
+
+    *tHit = t0;
+
+	return true;
+}
+
+
 
 
 

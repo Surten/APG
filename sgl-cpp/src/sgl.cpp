@@ -811,16 +811,27 @@ void sglPointLight(const float x,
 
 void sglRayTraceScene() {
   // TODO: add triangles to ConActive->primitiveList in  sglEnd()
-  Matrix4f pvMatInv = Matrix4f(*ConActive->projectionStack.top);
-  pvMatInv = pvMatInv * ConActive->viewport.viewportMatrix;
-  pvMatInv.invert();
+  Matrix4f projectionInv = Matrix4f(*ConActive->projectionStack.top);
+  projectionInv.invert();
 
-  Matrix4f projInv = Matrix4f(*ConActive->projectionStack.top);
-  projInv.invert();
+  Matrix4f modelviewInv = Matrix4f(*ConActive->modelViewStack.top);
+  modelviewInv.invert();
+
+  Matrix4f viewportInv = Matrix4f(ConActive->viewport.viewportMatrix);
+  viewportInv.invert();
+
+  // modelviewInv.PrintMatrix();
+  // projectionInv.PrintMatrix();
+  // viewportInv.PrintMatrix();
+
 
   Vertex cameraPosition{0.0f, 0.0f, 0.0f, 1.0f};
-  ConActive->MatrixMultVector(projInv, cameraPosition);
-  cameraPosition.normalize();
+  // ConActive->MatrixMultVector(viewportInv, cameraPosition);
+  // ConActive->MatrixMultVector(projectionInv, cameraPosition);
+  // ConActive->MatrixMultVector(*ConActive->projectionStack.top, cameraPosition);
+  ConActive->MatrixMultVector(modelviewInv, cameraPosition);
+  // ConActive->MatrixMultVector(*ConActive->modelViewStack.top, cameraPosition);
+  cameraPosition.perspDivide();
 
   // get near plane from projection matrix
   // https://forums.structure.io/t/near-far-value-from-projection-matrix/3757
@@ -835,8 +846,11 @@ void sglRayTraceScene() {
   // iterate over pixels in screen
   for (int r = 0; r < w; r++){
     for (int c = 0; c < h; c++){
-      Vertex pxInWspc{static_cast<float>(r), static_cast<float>(c), near, 1.0f};
-      ConActive->MatrixMultVector(pvMatInv, pxInWspc);
+      Vertex pxInWspc{static_cast<float>(r) + .5f, static_cast<float>(c) + .5f, -1.0f, 1.0f};
+      ConActive->MatrixMultVector(viewportInv, pxInWspc);
+      ConActive->MatrixMultVector(projectionInv, pxInWspc);
+      // ConActive->MatrixMultVector(modelviewInv, pxInWspc);
+      // pxInWspc.z = -1.0f;
       pxInWspc.normalize();
       for (auto& p : ConActive->primitiveList){
         // TODO: z-buffer
@@ -848,9 +862,9 @@ void sglRayTraceScene() {
           // ConActive->color_buffer[3 * (r * w + c)] = p->r;
           // ConActive->color_buffer[3 * (r * w + c) + 1] = p->g;
           // ConActive->color_buffer[3 * (r * w + c) + 2] = p->b;
-          ConActive->color_buffer[3 * (r * w + c)] = 0.0f;
+          ConActive->color_buffer[3 * (r * w + c)] = (float)r / w;
           ConActive->color_buffer[3 * (r * w + c) + 1] = 0.0f;
-          ConActive->color_buffer[3 * (r * w + c) + 2] = 1.0f;
+          ConActive->color_buffer[3 * (r * w + c) + 2] = (float) c / w;
         } else {
           ;
         }

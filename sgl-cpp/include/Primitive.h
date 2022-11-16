@@ -19,12 +19,12 @@ public:
 
 class SphereP : public Primitive{
 public:
-    Vertex position;
+    Vertex center;
     float radius;
 
     SphereP(float x, float y, float z, float radius, float r, float g, float b)
     : Primitive(r, g, b), radius(radius){
-        position = Vertex{x, y, z, 1.0f};
+        center = Vertex{x, y, z, 1.0f};
     }
 
     bool traceRay(Ray r, float* tHit);
