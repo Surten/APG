@@ -18,6 +18,17 @@ struct Ray{
     Ray(float x, float y, float z, float dx, float dy, float dz, float tMin, float tMax):
         x(x), y(y), z(z), dx(dx), dz(dz), tMin(tMin), tMax(tMax){}
 
+    Ray(Vertex& position, Vertex& direction, float tMin, float tMax):
+        tMin(tMin), tMax(tMax){
+            x = position.x;
+            y = position.y;
+            z = position.z;
+            dx = direction.x;
+            dy = direction.y;
+            dz = direction.z;
+
+        }
+
     Vertex operator-(Vertex& v){
         return Vertex(
             x - v.x,

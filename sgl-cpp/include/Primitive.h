@@ -13,7 +13,7 @@ public:
 
     Primitive(float r, float g, float b): r(r), g(g), b(b){}
     // should be abstract, but it's evening, i'm tired and can't make it work
-    virtual bool traceRay(Ray r, float* tHit){return false;};
+    virtual bool traceRay(Ray r, float* tHit) = 0;
 };
 
 

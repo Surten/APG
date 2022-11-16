@@ -35,6 +35,17 @@ struct Vertex{
     Vertex& operator-(Vertex const &v){
         return Vertex(x - v.x, y - v.y, z - v.z, w - v.w);
     }
+
+    void normalize(){
+        x /= w;
+        y /= w;
+        z /= w;
+        w = 1.0f;
+        float len = sqrtf(x*x + y*y + z*z);
+        x /= len;
+        y /= len;
+        z /= len;
+    }
 };
 
 

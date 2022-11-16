@@ -786,7 +786,7 @@ void sglSphere(const float x,
                const float radius)
 {
   // TODO: handle calls out of beginScene()
-  SphereP sphere = SphereP{x, y, z, radius,
+  SphereP* sphere = new SphereP{x, y, z, radius,
     ConActive->currentColor[0], ConActive->currentColor[2], ConActive->currentColor[2]};
   ConActive->primitiveList.push_back(sphere);
 }
@@ -811,17 +811,49 @@ void sglPointLight(const float x,
 
 void sglRayTraceScene() {
   // TODO: add triangles to ConActive->primitiveList in  sglEnd()
-  Matrix4f projectionInv = Matrix4f(*ConActive->projectionStack.top);
-  projectionInv.invert();
-  for (int i = 0; i < ConActive->frameWidth; i++){
-    for (int j = 0; j < ConActive->frameHeight; j++){
+  Matrix4f pvMatInv = Matrix4f(*ConActive->projectionStack.top);
+  pvMatInv = pvMatInv * ConActive->viewport.viewportMatrix;
+  pvMatInv.invert();
+
+  Matrix4f projInv = Matrix4f(*ConActive->projectionStack.top);
+  projInv.invert();
+
+  Vertex cameraPosition{0.0f, 0.0f, 0.0f, 1.0f};
+  ConActive->MatrixMultVector(projInv, cameraPosition);
+  cameraPosition.normalize();
+
+  // get near plane from projection matrix
+  // https://forums.structure.io/t/near-far-value-from-projection-matrix/3757
+  float m22 = - ConActive->projectionStack.top->matrix[10];
+  float m32 = - ConActive->projectionStack.top->matrix[11];
+  float far = (2.0f*m32)/(2.0f*m22-2.0f);
+  float near = ((m22-1.0f)*far)/(m22+1.0f);
+
+  int w = ConActive->frameWidth;
+  int h = ConActive->frameHeight;
+
+  // iterate over pixels in screen
+  for (int r = 0; r < w; r++){
+    for (int c = 0; c < h; c++){
+      Vertex pxInWspc{static_cast<float>(r), static_cast<float>(c), near, 1.0f};
+      ConActive->MatrixMultVector(pvMatInv, pxInWspc);
+      pxInWspc.normalize();
       for (auto& p : ConActive->primitiveList){
-        // FIXME: direction won't be (i, j, 0). Unproject
         // TODO: z-buffer
-        Ray ray{.0f, .0f, .0f, static_cast<float>(i), static_cast<float>(j), 0.0f, 0.0f, INFINITY};
+        Ray ray{cameraPosition, pxInWspc, near, far}; // replace far with min(far, z-buffer[r, c])
         float t;
-        bool hit = p.traceRay(ray, &t);
+        bool hit = p->traceRay(ray, &t);
         // TODO: write color back to color buffer
+        if (hit){
+          // ConActive->color_buffer[3 * (r * w + c)] = p->r;
+          // ConActive->color_buffer[3 * (r * w + c) + 1] = p->g;
+          // ConActive->color_buffer[3 * (r * w + c) + 2] = p->b;
+          ConActive->color_buffer[3 * (r * w + c)] = 0.0f;
+          ConActive->color_buffer[3 * (r * w + c) + 1] = 0.0f;
+          ConActive->color_buffer[3 * (r * w + c) + 2] = 1.0f;
+        } else {
+          ;
+        }
         // TODO: depth buffer
         // TODO: lighting
       }

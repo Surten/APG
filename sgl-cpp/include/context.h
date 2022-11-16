@@ -34,7 +34,7 @@ public:
 	MatrixLinkedList projectionStack;
 
 	bool beginSceneActive = false;
-	std::vector<Primitive> primitiveList;
+	std::vector<Primitive*> primitiveList;
 
 	Context(int idd, int width, int heigth);
 	~Context();

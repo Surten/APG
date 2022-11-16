@@ -38,10 +38,9 @@ bool SphereP::traceRay(Ray ray, float* tHit){
     float c = dot(distance, distance) - radius * radius;
     float d = b * b - c;
 
-    float t;
     if (d > 0){
-        t = -b - sqrtf(d);
-        if (t < 0.0f){
+        *tHit = -b - sqrtf(d);
+        if (*tHit < 0.0f){
             *tHit = -b + sqrtf(d);
         }
         return true;
