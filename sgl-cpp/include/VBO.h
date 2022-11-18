@@ -28,12 +28,29 @@ struct Vertex{
     float y;
     float z;
     float w;
-    Vertex(){}
+    Vertex(){x = y = z = 0.0f; w = 1.0f;}
     //Vertex(Vertex& v){x=v.x;y=v.y;z=v.z;w=v.w;}
     Vertex(float xx, float yy, float zz, float ww) : x(xx), y(yy), z(zz), w(ww){}
+    Vertex(float xx, float yy, float zz) : x(xx), y(yy), z(zz), w(1.0f){}
 
-    Vertex& operator-(Vertex const &v){
-        return Vertex(x - v.x, y - v.y, z - v.z, w - v.w);
+    Vertex operator-(Vertex const &v){
+        float wRatio = w / v.w;
+        x /= wRatio;
+        y /= wRatio;
+        z /= wRatio;
+        w /= wRatio;
+
+        return Vertex(x - v.x, y - v.y, z - v.z, v.w);
+    }
+
+    Vertex operator+(Vertex const&v){
+        float wRatio = w / v.w;
+        x /= wRatio;
+        y /= wRatio;
+        z /= wRatio;
+        w /= wRatio;
+        
+        return Vertex(x + v.x, y + v.y, z + v.z, v.w);
     }
 
     void perspDivide(){
@@ -51,6 +68,9 @@ struct Vertex{
         z /= len;
     }
 };
+
+Vertex operator*(float c, Vertex& v);
+Vertex operator*(Vertex& v, float c);
 
 
 /**

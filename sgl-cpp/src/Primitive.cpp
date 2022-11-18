@@ -1,6 +1,12 @@
 #include "Primitive.h"
 
-bool TraingleP::traceRay(Ray ray, float* tHit){
+
+
+Vertex TraingleP::normalAt(Vertex &v){
+    return normal;
+}
+
+bool TraingleP::traceRay(Ray &ray, float* tHit){
     // uses pbrt from courseware
     // https://cent.felk.cvut.cz/courses/APG/triangle-pbrt.cpp
 
@@ -32,6 +38,7 @@ bool TraingleP::traceRay(Ray ray, float* tHit){
 }
 
 
+
 bool solveQuadratic(const float &a, const float &b, const float &c, float &x0, float &x1) 
 { 
     float discr = b * b - 4 * a * c; 
@@ -49,8 +56,15 @@ bool solveQuadratic(const float &a, const float &b, const float &c, float &x0, f
     return true; 
 }
 
+
+Vertex SphereP::normalAt(Vertex &v){
+    Vertex normal = center - v;
+    normal.normalize();
+    return normal;
+}
+
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
-bool SphereP::traceRay(Ray ray, float* tHit){
+bool SphereP::traceRay(Ray &ray, float* tHit){
     float t0, t1;
 
     Vertex L = ray - center;

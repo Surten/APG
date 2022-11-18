@@ -1,5 +1,13 @@
 #include "VBO.h"
 
+Vertex operator*(float c, Vertex& v){
+    return Vertex{c * v.x, c * v.y, c * v.z, v.w};
+}
+
+Vertex operator*(Vertex& v, float c){
+    return Vertex{c * v.x, c * v.y, c * v.z, v.w};
+}
+
 
 
 void Viewport::CreateViewportMatrix(){

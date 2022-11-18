@@ -7,6 +7,8 @@
 #include "Matrix4f.h"
 #include "Ray.h"
 #include "Primitive.h"
+#include "material.h"
+#include "pointLight.h"
 
 /**
  * Class containing all info about one drawing
@@ -22,6 +24,7 @@ public:
 	unsigned int depthBufferSize;
 	float currentColor[3];
 	float clearColor[3];
+	Material currentMaterial;
 	sglEElementType EleType;
 	VBO vbo;
 	sglEMatrixMode MatrixMode;
@@ -35,6 +38,7 @@ public:
 
 	bool beginSceneActive = false;
 	std::vector<Primitive*> primitiveList;
+	std::vector<PointLight> pointLightList;
 
 	Context(int idd, int width, int heigth);
 	~Context();
@@ -67,6 +71,8 @@ public:
 	*/
 	void ViewPortTransform(Vertex &v);
 
+
+	void discardPrimitives();
 
 };
 

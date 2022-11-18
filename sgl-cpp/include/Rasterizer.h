@@ -2,6 +2,7 @@
 #define _RASTERIZER_H_
 
 #include "context.h"
+#include "pointLight.h"
 
 
 /**
@@ -88,6 +89,7 @@ public:
     void Bresenham3D(SCVertex v1, const SCVertex v2);
 
     void FragmentShader(SCVertex &v);
+    void Rasterizer::FragmentShader(SCVertex &v, Vertex &position, Vertex &lookDirection, Vertex &normal, Material &mat);
 
 
     /**

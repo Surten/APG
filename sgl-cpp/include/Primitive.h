@@ -5,15 +5,16 @@
 
 #include "VBO.h"
 #include "Ray.h"
-
+#include "material.h"
 
 class Primitive{
 public:
-    float r, g, b;
+    Material material;
 
-    Primitive(float r, float g, float b): r(r), g(g), b(b){}
+    Primitive(Material &m): material(m){}
     // should be abstract, but it's evening, i'm tired and can't make it work
-    virtual bool traceRay(Ray r, float* tHit) = 0;
+    virtual bool traceRay(Ray &r, float* tHit) = 0;
+    virtual Vertex normalAt(Vertex &v) = 0;
 };
 
 
@@ -22,12 +23,13 @@ public:
     Vertex center;
     float radius;
 
-    SphereP(float x, float y, float z, float radius, float r, float g, float b)
-    : Primitive(r, g, b), radius(radius){
+    SphereP(float x, float y, float z, float radius, Material &m)
+    : Primitive(m), radius(radius){
         center = Vertex{x, y, z, 1.0f};
     }
 
-    bool traceRay(Ray r, float* tHit);
+    bool traceRay(Ray &r, float* tHit);
+    Vertex normalAt(Vertex &v);
 };
 
 
@@ -39,14 +41,15 @@ public:
     Vertex e1, e2;
     Vertex normal;
 
-    TraingleP(Vertex &v1, Vertex &v2, Vertex &v3, float r, float g, float b)
-        : Primitive(r, g, b), v1(v1), v2(v2), v3(v3){
+    TraingleP(Vertex &v1, Vertex &v2, Vertex &v3, Material &m)
+        : Primitive(m), v1(v1), v2(v2), v3(v3){
             e1 = v2 - v1;
             e2 = v3 - v1;
             normal = cross(e1, e2);
         }
 
-    bool traceRay(Ray r, float* tHit);
+    bool traceRay(Ray &r, float* tHit);
+    Vertex normalAt(Vertex &v);
 
 };
 

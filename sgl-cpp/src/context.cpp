@@ -15,6 +15,7 @@ Context::Context(int idd, int width, int heigth) : id(idd), frameWidth(width), f
 Context::~Context(){
 	delete[] color_buffer;
 	delete[] depth_buffer;
+	discardPrimitives();
 }
 
 Matrix4f Context::GetPVMMatrix(){
@@ -58,4 +59,9 @@ void Context::ViewPortTransform(Vertex &v){
 
 }
 
-
+void Context::discardPrimitives(){
+	for (auto primitive : primitiveList){
+		delete primitive;
+	}
+	primitiveList.clear();
+}

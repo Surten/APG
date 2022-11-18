@@ -6,12 +6,15 @@
 #include "VBO.h"
 
 struct Ray{
-    float x;
-    float y;
-    float z;
-    float dx;
-    float dy;
-    float dz;
+    Vertex origin{};
+    Vertex direction{};
+
+    float &x = origin.x;
+    float &y = origin.y;
+    float &z = origin.z;
+    float &dx = direction.x;
+    float &dy = direction.y;
+    float &dz = direction.z;
     float tMin;
     float tMax;
     

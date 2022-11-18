@@ -13,6 +13,8 @@
 #include "Ray.h"
 #include "Primitive.h"
 
+#include <omp.h>
+
 #include <cmath>
 
 #define TWO_PI 6.2831853f
@@ -772,6 +774,7 @@ void sglDisable(sglEEnableFlags cap) {
 
 void sglBeginScene() {
   ConActive->beginSceneActive = true;
+  ConActive->discardPrimitives();
   // TODO: handle invalid calls
 }
 
@@ -787,7 +790,7 @@ void sglSphere(const float x,
 {
   // TODO: handle calls out of beginScene()
   SphereP* sphere = new SphereP{x, y, z, radius,
-    ConActive->currentColor[0], ConActive->currentColor[2], ConActive->currentColor[2]};
+    Material(ConActive->currentMaterial)};
   ConActive->primitiveList.push_back(sphere);
 }
 
@@ -799,7 +802,11 @@ void sglMaterial(const float r,
                  const float shine,
                  const float T,
                  const float ior)
-{}
+{
+  ConActive->currentMaterial.setProperties(r, g, b,
+                                           kd, ks,
+                                           shine, T, ior);
+}
 
 void sglPointLight(const float x,
                    const float y,
@@ -807,7 +814,12 @@ void sglPointLight(const float x,
                    const float r,
                    const float g,
                    const float b)
-{}
+{
+  Vertex position{x, y, z};
+  Color color{r, g, b};
+  PointLight light{position, color};
+  ConActive->pointLightList.push_back(light);
+}
 
 void sglRayTraceScene() {
   // TODO: add triangles to ConActive->primitiveList in  sglEnd()
@@ -843,10 +855,14 @@ void sglRayTraceScene() {
   int w = ConActive->frameWidth;
   int h = ConActive->frameHeight;
 
+  Rasterizer rasterizer{ConActive};
+
   // iterate over pixels in screen
+  #pragma omp parallel for schedule(static)
   for (int r = 0; r < w; r++){
+    // std::cout << omp_get_thread_num() << std::endl;
     for (int c = 0; c < h; c++){
-      Vertex pxInWspc{static_cast<float>(r) + .5f, static_cast<float>(c) + .5f, -1.0f, 1.0f};
+      Vertex pxInWspc{static_cast<float>(r), static_cast<float>(c), -1.0f, 1.0f};
       ConActive->MatrixMultVector(viewportInv, pxInWspc);
       ConActive->MatrixMultVector(projectionInv, pxInWspc);
       // ConActive->MatrixMultVector(modelviewInv, pxInWspc);
@@ -859,12 +875,12 @@ void sglRayTraceScene() {
         bool hit = p->traceRay(ray, &t);
         // TODO: write color back to color buffer
         if (hit){
-          // ConActive->color_buffer[3 * (r * w + c)] = p->r;
-          // ConActive->color_buffer[3 * (r * w + c) + 1] = p->g;
-          // ConActive->color_buffer[3 * (r * w + c) + 2] = p->b;
-          ConActive->color_buffer[3 * (r * w + c)] = (float)r / w;
-          ConActive->color_buffer[3 * (r * w + c) + 1] = 0.0f;
-          ConActive->color_buffer[3 * (r * w + c) + 2] = (float) c / w;
+          Vertex point{cameraPosition + t * ray.direction};
+          // ConActive->color_buffer[3 * (r * w + c)] = p->material.color.r;
+          // ConActive->color_buffer[3 * (r * w + c) + 1] = p->material.color.g;
+          // ConActive->color_buffer[3 * (r * w + c) + 2] = p->material.color.b;
+          SCVertex screenVert{r, c, t};
+          rasterizer.FragmentShader(screenVert, point, ray.direction, p->normalAt(point), p->material);
         } else {
           ;
         }

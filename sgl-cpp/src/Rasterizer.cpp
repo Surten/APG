@@ -1,6 +1,7 @@
 #include "Rasterizer.h"
 #include <cmath>
 
+
 Rasterizer::Rasterizer(Context* ContextActive){
     Con = ContextActive;
 }
@@ -345,10 +346,40 @@ void Rasterizer::ScanLineFill(std::vector<SLFEdge> &edges, int yMax, int yMin){
 
 
 
-
+float clamp01(float num){
+    return std::min(std::max(num, 0.0f), 1.0f);
+}
 
 void Rasterizer::FragmentShader(SCVertex &v){
     Con->color_buffer[3*(v.y*Con->frameWidth + v.x)] = Con->currentColor[0];
     Con->color_buffer[3*(v.y*Con->frameWidth + v.x) + 1] = Con->currentColor[1];
     Con->color_buffer[3*(v.y*Con->frameWidth + v.x) + 2] = Con->currentColor[2];
+}
+
+
+void Rasterizer::FragmentShader(SCVertex &v, Vertex &position, Vertex &lookDirection, Vertex &normal, Material &mat){
+    Color color{.0f, .0f, .0f};
+    Matrix4f modelView = *Con->modelViewStack.top;
+
+    using std::max;
+    using std::min;
+    
+    for (PointLight light : Con->pointLightList){
+        // phong
+        // ambient is neglected = 0
+
+        // diffuse
+        Vertex L = position - light.position;  // light direction
+        L.normalize();
+        float cosA = dot(L, normal);
+        color += light.color * (mat.color * mat.kd) * max(cosA, 0.0f);
+        // specular
+        Vertex R = 2 * dot(L, normal) * normal - L; // reflected
+        R.normalize();
+        float cosB = dot(lookDirection, R);
+        color += light.color  * mat.ks * powf(max(cosB, 0.0f), mat.shine);
+    }
+    Con->color_buffer[3*(v.y*Con->frameWidth + v.x)    ] = color.r;
+    Con->color_buffer[3*(v.y*Con->frameWidth + v.x) + 1] = color.g;
+    Con->color_buffer[3*(v.y*Con->frameWidth + v.x) + 2] = color.b;
 }
