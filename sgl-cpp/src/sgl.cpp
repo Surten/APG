@@ -261,7 +261,7 @@ void sglEnd(void) {
       break;
     
     case SGL_LINE:
-      for (size_t i = 0; i < static_cast<int>(v->GetSize())-1; i++)
+      for (size_t i = 0; i < v->GetSize()-1; i++)
       {
         if(v->vertex_buffer.at(i).w == 0 || v->vertex_buffer.at(i+1).w == 0){v->ClearVBO(); return;}
         rasterizer.DrawLine(v->vertex_buffer.at(i), v->vertex_buffer.at(i+1));
@@ -797,8 +797,8 @@ void sglSphere(const float x,
                const float radius)
 {
   // TODO: handle calls out of beginScene()
-  SphereP* sphere = new SphereP{x, y, z, radius,
-    Material(ConActive->currentMaterial)};
+  Material mat{ConActive->currentMaterial};
+  SphereP* sphere = new SphereP{x, y, z, radius, mat};
   ConActive->primitiveList.push_back(sphere);
 }
 
@@ -893,7 +893,7 @@ void sglRayTraceScene() {
   int width = ConActive->frameWidth;
 
   // iterate over pixels in screen
-  #pragma omp parallel for schedule(static)
+  // #pragma omp parallel for schedule(static)
   for (int y = 0; y < w; y++){
     for (int x = 0; x < h; x++){
       // if (x == 176 && y == 315){
@@ -924,7 +924,8 @@ void sglRayTraceScene() {
           }
           Vertex point{cameraPosition + t * ray.direction};
           SCVertex screenVert{y, x, t};
-          rasterizer.FragmentShader(screenVert, point, ray.direction, p->normalAt(point), p->material);
+          Vertex normal = p->normalAt(point);
+          rasterizer.FragmentShader(screenVert, point, ray.direction, normal, p->material);
           if (ConActive->depthActive){
             ConActive->depth_buffer[y * width + x] = t;
           }

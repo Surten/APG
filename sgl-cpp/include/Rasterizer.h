@@ -89,7 +89,7 @@ public:
     void Bresenham3D(SCVertex v1, const SCVertex v2);
 
     void FragmentShader(SCVertex &v);
-    void Rasterizer::FragmentShader(SCVertex &v, Vertex &position, Vertex &lookDirection, Vertex &normal, Material &mat);
+    void FragmentShader(SCVertex &v, Vertex &position, Vertex &lookDirection, Vertex &normal, Material &mat);
 
 
     /**

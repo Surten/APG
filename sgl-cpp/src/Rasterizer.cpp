@@ -364,7 +364,7 @@ void Rasterizer::vboToPrimitives(){
             break;
   
         case SGL_TRIANGLES:
-            for (int i = 0; i < vboSize - 2; i++){
+            for (size_t i = 0; i < vboSize - 2; i++){
                 TriangleP* tri = new TriangleP{vbo[i], vbo[i+1], vbo[i+2], Con->currentMaterial};
                 TriangleP* tri2 = new TriangleP{vbo[i], vbo[i+2], vbo[i+1], Con->currentMaterial};
                 Con->primitiveList.push_back(tri);
@@ -375,7 +375,7 @@ void Rasterizer::vboToPrimitives(){
         case SGL_POLYGON:
             // Convert into triangle fan
             Vertex first = vbo[0];
-            for (int i = 1; i < vboSize - 1; i++){
+            for (size_t i = 1; i < vboSize - 1; i++){
                 Vertex second = vbo[i];
                 Vertex third = vbo[i + 1];
                 TriangleP* tri = new TriangleP{first, second, third, Con->currentMaterial};

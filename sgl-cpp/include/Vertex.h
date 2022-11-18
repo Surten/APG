@@ -2,6 +2,7 @@
 #define _VERTEX_H
 
 #include <algorithm>
+#include <cmath>
 
 /**
  * Verticies in VBO

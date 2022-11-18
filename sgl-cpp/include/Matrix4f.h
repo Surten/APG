@@ -2,6 +2,8 @@
 #define _MATRIX_H_
 #include <iostream>
 #include "Vertex.h"
+#include <algorithm>
+#include <cmath>
 
 /**
  * Holds Matrix 4x4 and its operations

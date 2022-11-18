@@ -12,6 +12,7 @@ public:
     Material material;
 
     Primitive(Material &m): material(m){}
+    virtual ~Primitive(){}
     // should be abstract, but it's evening, i'm tired and can't make it work
     virtual bool traceRay(Ray &r, float* tHit) = 0;
     virtual Vertex normalAt(Vertex &v) = 0;
@@ -28,6 +29,7 @@ public:
     : Primitive(m), radius(radius){
         center = Vertex{x, y, z, 1.0f};
     }
+    ~SphereP(){}
 
     bool traceRay(Ray &r, float* tHit);
     Vertex normalAt(Vertex &v);
@@ -51,6 +53,7 @@ public:
             normal = cross(e0, e1);
             normal.normalize();
         }
+    ~TriangleP(){}
 
     bool traceRay(Ray &r, float* tHit);
     Vertex normalAt(Vertex &v);
