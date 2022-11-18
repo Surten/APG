@@ -893,7 +893,7 @@ void sglRayTraceScene() {
   int width = ConActive->frameWidth;
 
   // iterate over pixels in screen
-  // #pragma omp parallel for schedule(static)
+  #pragma omp parallel for schedule(static)
   for (int y = 0; y < w; y++){
     for (int x = 0; x < h; x++){
       // if (x == 176 && y == 315){
