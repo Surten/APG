@@ -366,7 +366,9 @@ void Rasterizer::vboToPrimitives(){
         case SGL_TRIANGLES:
             for (int i = 0; i < vboSize - 2; i++){
                 TriangleP* tri = new TriangleP{vbo[i], vbo[i+1], vbo[i+2], Con->currentMaterial};
+                TriangleP* tri2 = new TriangleP{vbo[i], vbo[i+2], vbo[i+1], Con->currentMaterial};
                 Con->primitiveList.push_back(tri);
+                Con->primitiveList.push_back(tri2);
             }
             break;
   
@@ -377,7 +379,9 @@ void Rasterizer::vboToPrimitives(){
                 Vertex second = vbo[i];
                 Vertex third = vbo[i + 1];
                 TriangleP* tri = new TriangleP{first, second, third, Con->currentMaterial};
+                TriangleP* tri2 = new TriangleP{first, third, second, Con->currentMaterial};
                 Con->primitiveList.push_back(tri);
+                Con->primitiveList.push_back(tri2);
             }
             break;
     }
@@ -421,4 +425,7 @@ void Rasterizer::FragmentShader(SCVertex &v, Vertex &position, Vertex &lookDirec
     Con->color_buffer[3*(v.y*Con->frameWidth + v.x)    ] = color.r;
     Con->color_buffer[3*(v.y*Con->frameWidth + v.x) + 1] = color.g;
     Con->color_buffer[3*(v.y*Con->frameWidth + v.x) + 2] = color.b;
+    // Con->color_buffer[3*(v.y*Con->frameWidth + v.x)    ] = mat.color.r;
+    // Con->color_buffer[3*(v.y*Con->frameWidth + v.x) + 1] = mat.color.g;
+    // Con->color_buffer[3*(v.y*Con->frameWidth + v.x) + 2] = mat.color.b;
 }

@@ -919,6 +919,9 @@ void sglRayTraceScene() {
         float t; // distance at which the ray hit
         bool hit = p->traceRay(ray, &t);
         if (hit){
+          if (dynamic_cast<TriangleP*>(p)){
+            x = x;
+          }
           Vertex point{cameraPosition + t * ray.direction};
           SCVertex screenVert{y, x, t};
           rasterizer.FragmentShader(screenVert, point, ray.direction, p->normalAt(point), p->material);
@@ -931,7 +934,7 @@ void sglRayTraceScene() {
     
   }
 
-  drawAxis();
+  // drawAxis();
 }
 
 void sglRasterizeScene() {}

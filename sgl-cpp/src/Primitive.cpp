@@ -1,61 +1,72 @@
 #include "Primitive.h"
 
+
+
 void TriangleP::transform(Matrix4f &mat){
+    mat.MultiplyVector(v0);
     mat.MultiplyVector(v1);
     mat.MultiplyVector(v2);
-    mat.MultiplyVector(v3);
+    mat.MultiplyVector(e0);
     mat.MultiplyVector(e1);
-    mat.MultiplyVector(e2);
     mat.MultiplyVector(normal);
 
 }
 
 Vertex TriangleP::normalAt(Vertex &v){
+    normal.normalize();
     return normal;
 }
 
+// Moller
+// https://sci-hub.se/10.1080/10867651.1997.10487468
 bool TriangleP::traceRay(Ray &ray, float* tHit){
-    // uses pbrt from courseware
-    // https://cent.felk.cvut.cz/courses/APG/triangle-pbrt.cpp
-
-    Vertex s1 = cross(ray.direction, e2);
-    float divisor = dot(s1, e1);
-    if (divisor == 0){
-        return false;
-    }
-    float invDivisor = 1.0f / divisor;
-
-    Vertex d = ray.origin - v1; 
-    float b1 = dot(d, s1) * invDivisor;
-    if (b1 < 0.0f || b1 > 1.0f){
+    normal.normalize();
+    if (dot(ray.direction, normal) < 0.0f){
         return false;
     }
 
-    Vertex s2 = cross(d, e1);
-    float b2 = dot(ray.direction, s2) * invDivisor;
-
-    if (b2 < 0.0f || b1 + b2 > 1.0f){
+    Vertex pvec = cross(ray.direction, e2);
+    float det, inv_det;
+    det = dot(e1, pvec);
+    if (det < 0.00001f){
         return false;
     }
-    float t = dot(e2, s2) * invDivisor;
+    Vertex tvec = ray.origin - v0;
+    float u = dot(tvec, pvec);
+    if (u < 0.0f || u > det){
+        return false;
+    }
+
+    Vertex qvec = cross(tvec, e1);
+
+    float v = dot(ray.direction, qvec);
+    if (v < 0.0 || u + v > det){
+        return false;
+    }
+    float t = dot(e2, qvec);
+    inv_det = 1.0f / det;
+    t *= inv_det;
+
+    *tHit = t;
+
     if (t < ray.tMin || t > ray.tMax){
         return false;
     }
-    *tHit = t;
     return true;
 }
+
 
 
 
 bool solveQuadratic(const float &a, const float &b, const float &c, float &x0, float &x1) 
 { 
     float discr = b * b - 4.0f * a * c; 
-    if (discr < 0) return false; 
-    else if (discr == 0) x0 = x1 = - 0.5f * b / a; 
+    if (discr < 0.0f) return false; 
+    else if (discr == 0.0f) x0 = x1 = - 0.5f * b / a; 
     else { 
-        float q = (b > 0) ? 
-            -0.5 * (b + sqrt(discr)) : 
-            -0.5 * (b - sqrt(discr)); 
+        float q = (b > 0.0f) ? 
+            -0.5f * (b + sqrt(discr)) : 
+            -0.5f * (b - sqrt(discr)); 
         x0 = q / a; 
         x1 = c / q; 
     } 

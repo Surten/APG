@@ -38,16 +38,18 @@ public:
 class TriangleP : public Primitive{
 public:
     // vertices
-    Vertex v1, v2, v3;
+    Vertex v0, v1, v2;
     // two edges
-    Vertex e1, e2;
+    Vertex e0, e1, e2;
     Vertex normal;
 
-    TriangleP(Vertex &v1, Vertex &v2, Vertex &v3, Material &m)
-        : Primitive(m), v1(v1), v2(v2), v3(v3){
-            e1 = v2 - v1;
-            e2 = v3 - v1;
-            normal = cross(e1, e2);
+    TriangleP(Vertex &v0, Vertex &v1, Vertex &v2, Material &m)
+        : Primitive(m), v0(v0), v1(v1), v2(v2){
+            e0 = v2 - v1;
+            e1 = v1 - v0;
+            e2 = v2 - v0;
+            normal = cross(e0, e1);
+            normal.normalize();
         }
 
     bool traceRay(Ray &r, float* tHit);
