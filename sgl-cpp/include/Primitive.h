@@ -1,11 +1,11 @@
-#pragma once
 
 #ifndef _PRIMITIVE_H
 #define _PRIMITIVE_H
 
-#include "VBO.h"
+#include "Vertex.h"
 #include "Ray.h"
 #include "material.h"
+#include "Matrix4f.h"
 
 class Primitive{
 public:
@@ -15,6 +15,7 @@ public:
     // should be abstract, but it's evening, i'm tired and can't make it work
     virtual bool traceRay(Ray &r, float* tHit) = 0;
     virtual Vertex normalAt(Vertex &v) = 0;
+    virtual void transform(Matrix4f &mat) = 0;
 };
 
 
@@ -30,10 +31,11 @@ public:
 
     bool traceRay(Ray &r, float* tHit);
     Vertex normalAt(Vertex &v);
+    virtual void transform(Matrix4f &mat);
 };
 
 
-class TraingleP : public Primitive{
+class TriangleP : public Primitive{
 public:
     // vertices
     Vertex v1, v2, v3;
@@ -41,7 +43,7 @@ public:
     Vertex e1, e2;
     Vertex normal;
 
-    TraingleP(Vertex &v1, Vertex &v2, Vertex &v3, Material &m)
+    TriangleP(Vertex &v1, Vertex &v2, Vertex &v3, Material &m)
         : Primitive(m), v1(v1), v2(v2), v3(v3){
             e1 = v2 - v1;
             e2 = v3 - v1;
@@ -50,6 +52,7 @@ public:
 
     bool traceRay(Ray &r, float* tHit);
     Vertex normalAt(Vertex &v);
+    virtual void transform(Matrix4f &mat);
 
 };
 

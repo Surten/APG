@@ -99,6 +99,12 @@ public:
     std::vector<SLFEdge> CreateEdges(Vertex &v1, Vertex &v2, Vertex &v3, int &yMax, int &yMin);
     std::vector<SLFEdge> CreateEdges(std::vector<Vertex> &vec, int &yMax, int &yMin);
 
+
+    /**
+     * Transforming VBO into primitives (triangles)
+    */
+    void vboToPrimitives();
+
     /**
      * Filling algorithm
     */

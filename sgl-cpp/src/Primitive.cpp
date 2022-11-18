@@ -1,30 +1,38 @@
 #include "Primitive.h"
 
+void TriangleP::transform(Matrix4f &mat){
+    mat.MultiplyVector(v1);
+    mat.MultiplyVector(v2);
+    mat.MultiplyVector(v3);
+    mat.MultiplyVector(e1);
+    mat.MultiplyVector(e2);
+    mat.MultiplyVector(normal);
 
+}
 
-Vertex TraingleP::normalAt(Vertex &v){
+Vertex TriangleP::normalAt(Vertex &v){
     return normal;
 }
 
-bool TraingleP::traceRay(Ray &ray, float* tHit){
+bool TriangleP::traceRay(Ray &ray, float* tHit){
     // uses pbrt from courseware
     // https://cent.felk.cvut.cz/courses/APG/triangle-pbrt.cpp
 
-    Vertex s1 = cross(ray, e2);
+    Vertex s1 = cross(ray.direction, e2);
     float divisor = dot(s1, e1);
     if (divisor == 0){
         return false;
     }
     float invDivisor = 1.0f / divisor;
 
-    Vertex d = ray - v1; 
+    Vertex d = ray.origin - v1; 
     float b1 = dot(d, s1) * invDivisor;
     if (b1 < 0.0f || b1 > 1.0f){
         return false;
     }
 
     Vertex s2 = cross(d, e1);
-    float b2 = dot(ray, s2) * invDivisor;
+    float b2 = dot(ray.direction, s2) * invDivisor;
 
     if (b2 < 0.0f || b1 + b2 > 1.0f){
         return false;
@@ -41,9 +49,9 @@ bool TraingleP::traceRay(Ray &ray, float* tHit){
 
 bool solveQuadratic(const float &a, const float &b, const float &c, float &x0, float &x1) 
 { 
-    float discr = b * b - 4 * a * c; 
+    float discr = b * b - 4.0f * a * c; 
     if (discr < 0) return false; 
-    else if (discr == 0) x0 = x1 = - 0.5 * b / a; 
+    else if (discr == 0) x0 = x1 = - 0.5f * b / a; 
     else { 
         float q = (b > 0) ? 
             -0.5 * (b + sqrt(discr)) : 
@@ -54,6 +62,11 @@ bool solveQuadratic(const float &a, const float &b, const float &c, float &x0, f
     if (x0 > x1) std::swap(x0, x1); 
  
     return true; 
+}
+
+
+void SphereP::transform(Matrix4f &mat){
+    mat.MultiplyVector(center);
 }
 
 
@@ -86,6 +99,10 @@ bool SphereP::traceRay(Ray &ray, float* tHit){
     }
 
     *tHit = t0;
+
+    if (t0 < ray.tMin || t0 > ray.tMax){
+        return false;
+    }
 
 	return true;
 }

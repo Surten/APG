@@ -234,6 +234,17 @@ int Matrix4f::invert()
     return 0 ; // matrix is regular .. inversion has been succesfull
 }
 
+void Matrix4f::MultiplyVector(Vertex &v){
+    float xx,yy,zz,ww;
+	xx = matrix[0]*v.x + matrix[1]*v.y + matrix[2]*v.z + matrix[3]*v.w;
+	yy = matrix[4]*v.x + matrix[5]*v.y + matrix[6]*v.z + matrix[7]*v.w;
+	zz = matrix[8]*v.x + matrix[9]*v.y + matrix[10]*v.z + matrix[11]*v.w;
+	ww = matrix[12]*v.x + matrix[13]*v.y + matrix[14]*v.z + matrix[15]*v.w;
+	v.x=xx;
+	v.y=yy;
+	v.z=zz;
+	v.w=ww;
+}
 
 void MatrixLinkedList::Push(Matrix4f& m){
     Matrix4f *mat = new Matrix4f(m);

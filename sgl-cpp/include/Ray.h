@@ -3,7 +3,7 @@
 #ifndef _RAY_H
 #define _RAY_H
 
-#include "VBO.h"
+#include "Vertex.h"
 
 struct Ray{
     Vertex origin{};

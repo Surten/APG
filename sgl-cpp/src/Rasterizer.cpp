@@ -1,5 +1,6 @@
 #include "Rasterizer.h"
 #include <cmath>
+#include "Primitive.h"
 
 
 Rasterizer::Rasterizer(Context* ContextActive){
@@ -344,6 +345,45 @@ void Rasterizer::ScanLineFill(std::vector<SLFEdge> &edges, int yMax, int yMin){
 
 
 
+void Rasterizer::vboToPrimitives(){
+    std::vector<Vertex> &vbo = Con->vbo.vertex_buffer;
+    size_t vboSize = Con->vbo.GetSize();
+    if (vboSize < 3){
+        return;
+    }
+
+    switch(Con->EleType){
+        case SGL_POINTS:
+        case SGL_LINES:
+        case SGL_LINE_STRIP:
+        case SGL_LINE_LOOP:
+        case SGL_LAST_ELEMENT_TYPE:
+        case SGL_AREA_LIGHT:
+        default:
+             // not supported
+            break;
+  
+        case SGL_TRIANGLES:
+            for (int i = 0; i < vboSize - 2; i++){
+                TriangleP* tri = new TriangleP{vbo[i], vbo[i+1], vbo[i+2], Con->currentMaterial};
+                Con->primitiveList.push_back(tri);
+            }
+            break;
+  
+        case SGL_POLYGON:
+            // Convert into triangle fan
+            Vertex first = vbo[0];
+            for (int i = 1; i < vboSize - 1; i++){
+                Vertex second = vbo[i];
+                Vertex third = vbo[i + 1];
+                TriangleP* tri = new TriangleP{first, second, third, Con->currentMaterial};
+                Con->primitiveList.push_back(tri);
+            }
+            break;
+    }
+
+}
+
 
 
 float clamp01(float num){
@@ -359,7 +399,6 @@ void Rasterizer::FragmentShader(SCVertex &v){
 
 void Rasterizer::FragmentShader(SCVertex &v, Vertex &position, Vertex &lookDirection, Vertex &normal, Material &mat){
     Color color{.0f, .0f, .0f};
-    Matrix4f modelView = *Con->modelViewStack.top;
 
     using std::max;
     using std::min;

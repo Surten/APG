@@ -151,6 +151,14 @@ void sglBegin(sglEElementType mode) {
 void sglEnd(void) {
   VBO *v = &ConActive->vbo;
 
+  if (ConActive->beginSceneActive){
+    Rasterizer rasterizer(ConActive);
+    rasterizer.vboToPrimitives();
+    v->ClearVBO();
+    return;
+  }
+
+
   if (v->GetSize() == 0){
     v->ClearVBO();
     return;
@@ -821,6 +829,36 @@ void sglPointLight(const float x,
   ConActive->pointLightList.push_back(light);
 }
 
+void drawAxis(){
+  Vertex origin{0.0f, 0.0f, 0.0f, 1.0f};
+  Vertex      x{1.0f, 0.0f, 0.0f, 1.0f};
+  Vertex      y{0.0f, 1.0f, 0.0f, 1.0f};
+  Vertex      z{0.0f, 0.0f, 1.0f, 1.0f};
+
+  Matrix4f pvm = ConActive->GetPVMMatrix();
+
+  ConActive->VertexShader(pvm, origin);
+  ConActive->PerspectiveDivision(origin);
+  ConActive->ViewPortTransform(origin);
+  ConActive->VertexShader(pvm, x);
+  ConActive->PerspectiveDivision(x);
+  ConActive->ViewPortTransform(x);
+  ConActive->VertexShader(pvm, y);
+  ConActive->PerspectiveDivision(y);
+  ConActive->ViewPortTransform(y);
+  ConActive->VertexShader(pvm, z);
+  ConActive->PerspectiveDivision(z);
+  ConActive->ViewPortTransform(z);
+
+  Rasterizer rasterizer(ConActive);
+  sglColor3f(1.0f, 0.0f, 0.0f);
+  rasterizer.DrawLine(origin, x);
+  sglColor3f(0.0f, 1.0f, 0.0f);
+  rasterizer.DrawLine(origin, y);
+  sglColor3f(0.0f, 0.0f, 1.0f);
+  rasterizer.DrawLine(origin, z);
+}
+
 void sglRayTraceScene() {
   // TODO: add triangles to ConActive->primitiveList in  sglEnd()
   Matrix4f projectionInv = Matrix4f(*ConActive->projectionStack.top);
@@ -832,18 +870,13 @@ void sglRayTraceScene() {
   Matrix4f viewportInv = Matrix4f(ConActive->viewport.viewportMatrix);
   viewportInv.invert();
 
-  // modelviewInv.PrintMatrix();
-  // projectionInv.PrintMatrix();
-  // viewportInv.PrintMatrix();
-
-
   Vertex cameraPosition{0.0f, 0.0f, 0.0f, 1.0f};
-  // ConActive->MatrixMultVector(viewportInv, cameraPosition);
   // ConActive->MatrixMultVector(projectionInv, cameraPosition);
-  // ConActive->MatrixMultVector(*ConActive->projectionStack.top, cameraPosition);
   ConActive->MatrixMultVector(modelviewInv, cameraPosition);
-  // ConActive->MatrixMultVector(*ConActive->modelViewStack.top, cameraPosition);
   cameraPosition.perspDivide();
+
+  using std::min;
+  using std::max;
 
   // get near plane from projection matrix
   // https://forums.structure.io/t/near-far-value-from-projection-matrix/3757
@@ -857,39 +890,48 @@ void sglRayTraceScene() {
 
   Rasterizer rasterizer{ConActive};
 
+  int width = ConActive->frameWidth;
+
   // iterate over pixels in screen
   #pragma omp parallel for schedule(static)
-  for (int r = 0; r < w; r++){
-    // std::cout << omp_get_thread_num() << std::endl;
-    for (int c = 0; c < h; c++){
-      Vertex pxInWspc{static_cast<float>(r), static_cast<float>(c), -1.0f, 1.0f};
+  for (int y = 0; y < w; y++){
+    for (int x = 0; x < h; x++){
+      // if (x == 176 && y == 315){
+      //   x = x;
+      // }
+      // transform pixel into world space
+      Vertex pxInWspc{static_cast<float>(y), static_cast<float>(x), -1.0f, 1.0f};
       ConActive->MatrixMultVector(viewportInv, pxInWspc);
       ConActive->MatrixMultVector(projectionInv, pxInWspc);
-      // ConActive->MatrixMultVector(modelviewInv, pxInWspc);
-      // pxInWspc.z = -1.0f;
-      pxInWspc.normalize();
+      ConActive->MatrixMultVector(modelviewInv, pxInWspc);
+      Vertex direction = pxInWspc - cameraPosition;
+      direction.normalize(); // ray direction
+
+      // iterate over primitives
       for (auto& p : ConActive->primitiveList){
-        // TODO: z-buffer
-        Ray ray{cameraPosition, pxInWspc, near, far}; // replace far with min(far, z-buffer[r, c])
-        float t;
+        float maxT = INFINITY;
+        if (ConActive->depthActive){
+          maxT = min(maxT, ConActive->depth_buffer[y * width + x]);
+        }
+        
+        direction.normalize();
+        Ray ray{cameraPosition, direction, near, maxT};
+        float t; // distance at which the ray hit
         bool hit = p->traceRay(ray, &t);
-        // TODO: write color back to color buffer
         if (hit){
           Vertex point{cameraPosition + t * ray.direction};
-          // ConActive->color_buffer[3 * (r * w + c)] = p->material.color.r;
-          // ConActive->color_buffer[3 * (r * w + c) + 1] = p->material.color.g;
-          // ConActive->color_buffer[3 * (r * w + c) + 2] = p->material.color.b;
-          SCVertex screenVert{r, c, t};
+          SCVertex screenVert{y, x, t};
           rasterizer.FragmentShader(screenVert, point, ray.direction, p->normalAt(point), p->material);
-        } else {
-          ;
-        }
-        // TODO: depth buffer
-        // TODO: lighting
+          if (ConActive->depthActive){
+            ConActive->depth_buffer[y * width + x] = t;
+          }
+        } 
       }
     }
     
   }
+
+  drawAxis();
 }
 
 void sglRasterizeScene() {}
