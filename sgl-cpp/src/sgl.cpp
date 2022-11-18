@@ -897,10 +897,10 @@ void sglRayTraceScene() {
   Matrix4f mvpv_inv = modelviewInv * projectionInv * viewportInv;
 
   using std::thread;
-  auto threadFun = [&](int threadNum, int chunkSize){
+  auto threadFun = [&](int threadNum, int start, int chunkSize){
   // iterate over pixels in screen
   //#pragma omp parallel for schedule(static)
-    for (int y = threadNum * chunkSize; y < (threadNum + 1) * chunkSize; y++){
+    for (int y = start; y < start + chunkSize; y++){
       for (int x = 0; x < h; x++){
         // transform pixel into world space
         Vertex pxInWspc{static_cast<float>(y), static_cast<float>(x), -1.0f, 1.0f};
@@ -943,10 +943,11 @@ void sglRayTraceScene() {
   for (unsigned int i = 0; i < processor_count; i++)
   {
     int chunkSize = width / processor_count;
+    int start = chunkSize * i;
     if (i == processor_count -  1){
       chunkSize = width - ((processor_count - 1) * chunkSize); // padding if the processor count is not factor of width
     }
-    threadPool.push_back(thread(threadFun, i, chunkSize));
+    threadPool.push_back(thread(threadFun, i, start, chunkSize));
   }
   for (auto &t : threadPool){
     t.join();
