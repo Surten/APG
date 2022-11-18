@@ -14,6 +14,7 @@
 #include "Primitive.h"
 
 #include <omp.h>
+#include <thread>
 
 #include <cmath>
 
@@ -892,47 +893,62 @@ void sglRayTraceScene() {
 
   int width = ConActive->frameWidth;
 
+  using std::thread;
+  auto threadFun = [&](int threadNum, int chunkSize){
   // iterate over pixels in screen
-  #pragma omp parallel for schedule(static)
-  for (int y = 0; y < w; y++){
-    for (int x = 0; x < h; x++){
-      // if (x == 176 && y == 315){
-      //   x = x;
-      // }
-      // transform pixel into world space
-      Vertex pxInWspc{static_cast<float>(y), static_cast<float>(x), -1.0f, 1.0f};
-      ConActive->MatrixMultVector(viewportInv, pxInWspc);
-      ConActive->MatrixMultVector(projectionInv, pxInWspc);
-      ConActive->MatrixMultVector(modelviewInv, pxInWspc);
-      Vertex direction = pxInWspc - cameraPosition;
-      direction.normalize(); // ray direction
+  //#pragma omp parallel for schedule(static)
+    for (int y = threadNum * chunkSize; y < (threadNum + 1) * chunkSize; y++){
+      for (int x = 0; x < h; x++){
+        // if (x == 176 && y == 315){
+        //   x = x;
+        // }
+        // transform pixel into world space
+        Vertex pxInWspc{static_cast<float>(y), static_cast<float>(x), -1.0f, 1.0f};
+        ConActive->MatrixMultVector(viewportInv, pxInWspc);
+        ConActive->MatrixMultVector(projectionInv, pxInWspc);
+        ConActive->MatrixMultVector(modelviewInv, pxInWspc);
+        Vertex direction = pxInWspc - cameraPosition;
+        direction.normalize(); // ray direction
 
-      // iterate over primitives
-      for (auto& p : ConActive->primitiveList){
-        float maxT = INFINITY;
-        if (ConActive->depthActive){
-          maxT = min(maxT, ConActive->depth_buffer[y * width + x]);
-        }
-        
-        direction.normalize();
-        Ray ray{cameraPosition, direction, near, maxT};
-        float t; // distance at which the ray hit
-        bool hit = p->traceRay(ray, &t);
-        if (hit){
-          if (dynamic_cast<TriangleP*>(p)){
-            x = x;
-          }
-          Vertex point{cameraPosition + t * ray.direction};
-          SCVertex screenVert{y, x, t};
-          Vertex normal = p->normalAt(point);
-          rasterizer.FragmentShader(screenVert, point, ray.direction, normal, p->material);
+        // iterate over primitives
+        for (auto& p : ConActive->primitiveList){
+          float maxT = INFINITY;
           if (ConActive->depthActive){
-            ConActive->depth_buffer[y * width + x] = t;
+            maxT = min(maxT, ConActive->depth_buffer[y * width + x]);
           }
-        } 
+          
+          direction.normalize();
+          Ray ray{cameraPosition, direction, near, maxT};
+          float t; // distance at which the ray hit
+          bool hit = p->traceRay(ray, &t);
+          if (hit){
+            if (dynamic_cast<TriangleP*>(p)){
+              x = x;
+            }
+            Vertex point{cameraPosition + t * ray.direction};
+            SCVertex screenVert{y, x, t};
+            Vertex normal = p->normalAt(point);
+            rasterizer.FragmentShader(screenVert, point, ray.direction, normal, p->material);
+            if (ConActive->depthActive){
+              ConActive->depth_buffer[y * width + x] = t;
+            }
+          } 
+        }
       }
     }
-    
+  };
+  const auto processor_count = std::max(thread::hardware_concurrency(), 1u);
+  std::vector<thread> threadPool;
+  for (int i = 0; i < processor_count; i++)
+  {
+    int chunkSize = width / processor_count;
+    if (i == processor_count -  1){
+      chunkSize = width - ((processor_count - 1) * chunkSize); // padding if the processor count is not factor of width
+    }
+    threadPool.push_back(thread(threadFun, i, chunkSize));
+  }
+  for (auto &t : threadPool){
+    t.join();
   }
 
   // drawAxis();
