@@ -17,6 +17,7 @@ public:
     virtual bool traceRay(Ray &r, float* tHit) = 0;
     virtual Vertex normalAt(Vertex &v) = 0;
     virtual void transform(Matrix4f &mat) = 0;
+    virtual bool facesVector(Vertex &v) = 0;
 };
 
 
@@ -31,9 +32,10 @@ public:
     }
     ~SphereP(){}
 
-    bool traceRay(Ray &r, float* tHit);
-    Vertex normalAt(Vertex &v);
-    virtual void transform(Matrix4f &mat);
+    bool traceRay(Ray &r, float* tHit) override;
+    Vertex normalAt(Vertex &v) override;
+    void transform(Matrix4f &mat) override;
+    bool facesVector(Vertex &v) override;
 };
 
 
@@ -55,9 +57,10 @@ public:
         }
     ~TriangleP(){}
 
-    bool traceRay(Ray &r, float* tHit);
-    Vertex normalAt(Vertex &v);
-    virtual void transform(Matrix4f &mat);
+    bool traceRay(Ray &r, float* tHit) override;
+    Vertex normalAt(Vertex &v) override;
+    void transform(Matrix4f &mat) override;
+    bool facesVector(Vertex &v) override;
 
 };
 

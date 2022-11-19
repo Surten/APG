@@ -1,6 +1,8 @@
 #include "Primitive.h"
 
-
+bool TriangleP::facesVector(Vertex &v){
+    return dot(v0 - v, normal) > 0.0f;
+}
 
 void TriangleP::transform(Matrix4f &mat){
     mat.MultiplyVector(v0);
@@ -9,6 +11,7 @@ void TriangleP::transform(Matrix4f &mat){
     mat.MultiplyVector(e0);
     mat.MultiplyVector(e1);
     mat.MultiplyVector(normal);
+    normal.normalize();
 
 }
 
@@ -20,7 +23,7 @@ Vertex TriangleP::normalAt(Vertex &v){
 // Moller
 // https://sci-hub.se/10.1080/10867651.1997.10487468
 bool TriangleP::traceRay(Ray &ray, float* tHit){
-    normal.normalize();
+    // normal.normalize();
     if (dot(ray.direction, normal) < 0.0f){
         return false;
     }
@@ -75,6 +78,10 @@ bool solveQuadratic(const float &a, const float &b, const float &c, float &x0, f
     return true; 
 }
 
+
+bool SphereP::facesVector(Vertex &v){
+    return true;
+}
 
 void SphereP::transform(Matrix4f &mat){
     mat.MultiplyVector(center);

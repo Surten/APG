@@ -863,7 +863,6 @@ void drawAxis(){
 }
 
 void sglRayTraceScene() {
-  // TODO: add triangles to ConActive->primitiveList in  sglEnd()
   Matrix4f projectionInv = Matrix4f(*ConActive->projectionStack.top);
   projectionInv.invert();
 
@@ -874,7 +873,6 @@ void sglRayTraceScene() {
   viewportInv.invert();
 
   Vertex cameraPosition{0.0f, 0.0f, 0.0f, 1.0f};
-  // ConActive->MatrixMultVector(projectionInv, cameraPosition);
   ConActive->MatrixMultVector(modelviewInv, cameraPosition);
   cameraPosition.perspDivide();
 
@@ -888,20 +886,27 @@ void sglRayTraceScene() {
   float far = (2.0f*m32)/(2.0f*m22-2.0f);
   float near = ((m22-1.0f)*far)/(m22+1.0f);
 
-  int h = ConActive->frameHeight;
 
   Rasterizer rasterizer{ConActive};
 
   int width = ConActive->frameWidth;
+  int height = ConActive->frameHeight;
 
   Matrix4f mvpv_inv = modelviewInv * projectionInv * viewportInv;
+
+  // backface culling
+  std::vector<Primitive*> frontfacePrimitives;
+  for (auto &p : ConActive->primitiveList){
+    if (p->facesVector(cameraPosition))
+      frontfacePrimitives.push_back(p);
+  }
 
   using std::thread;
   auto threadFun = [&](int threadNum, int start, int chunkSize){
   // iterate over pixels in screen
   //#pragma omp parallel for schedule(static)
     for (int y = start; y < start + chunkSize; y++){
-      for (int x = 0; x < h; x++){
+      for (int x = 0; x < height; x++){
         // transform pixel into world space
         Vertex pxInWspc{static_cast<float>(y), static_cast<float>(x), -1.0f, 1.0f};
         // ConActive->MatrixMultVector(viewportInv, pxInWspc);
@@ -912,7 +917,7 @@ void sglRayTraceScene() {
         direction.normalize(); // ray direction
 
         // iterate over primitives
-        for (auto& p : ConActive->primitiveList){
+        for (auto& p : frontfacePrimitives){
           float maxT = INFINITY;
           if (ConActive->depthActive){
             maxT = min(maxT, ConActive->depth_buffer[y * width + x]);
