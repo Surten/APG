@@ -10,6 +10,7 @@
 class Primitive{
 public:
     Material material;
+    float minDistFromCamera;
 
     Primitive(Material &m): material(m){}
     virtual ~Primitive(){}
@@ -18,6 +19,7 @@ public:
     virtual Vertex normalAt(Vertex &v) = 0;
     virtual void transform(Matrix4f &mat) = 0;
     virtual bool facesVector(Vertex &v) = 0;
+    virtual void setMinDistFromCamera(Vertex &camera) {minDistFromCamera = 0.0f;}
 };
 
 
@@ -36,6 +38,7 @@ public:
     Vertex normalAt(Vertex &v) override;
     void transform(Matrix4f &mat) override;
     bool facesVector(Vertex &v) override;
+    void setMinDistFromCamera(Vertex &camera) override;
 };
 
 
@@ -61,6 +64,7 @@ public:
     Vertex normalAt(Vertex &v) override;
     void transform(Matrix4f &mat) override;
     bool facesVector(Vertex &v) override;
+    void setMinDistFromCamera(Vertex &camera) override;
 
 };
 

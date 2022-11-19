@@ -897,8 +897,10 @@ void sglRayTraceScene() {
   // backface culling
   std::vector<Primitive*> frontfacePrimitives;
   for (auto &p : ConActive->primitiveList){
-    if (p->facesVector(cameraPosition))
+    if (p->facesVector(cameraPosition)){
       frontfacePrimitives.push_back(p);
+      p->setMinDistFromCamera(cameraPosition);
+    }
   }
 
   using std::thread;
@@ -923,7 +925,10 @@ void sglRayTraceScene() {
             maxT = min(maxT, ConActive->depth_buffer[y * width + x]);
           }
           
-          direction.normalize();
+          if (p->minDistFromCamera > maxT){
+            continue;
+          }
+
           Ray ray{cameraPosition, direction, near, maxT};
           float t; // distance at which the ray hit
           bool hit = p->traceRay(ray, &t);

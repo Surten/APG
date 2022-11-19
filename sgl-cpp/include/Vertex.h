@@ -51,6 +51,13 @@ struct Vertex{
         y /= len;
         z /= len;
     }
+
+    float length(){
+        float _x = x/w;
+        float _y = y/w;
+        float _z = z/w;
+        return sqrtf(_x * _x + _y * _y + _z * _z);
+    }
 };
 
 Vertex operator*(float c, Vertex& v);

@@ -58,6 +58,15 @@ bool TriangleP::traceRay(Ray &ray, float* tHit){
     return true;
 }
 
+void TriangleP::setMinDistFromCamera(Vertex &camera){
+    Vertex& distance = v0 - camera;
+    minDistFromCamera = distance.length();
+    distance = v1 - camera;
+    minDistFromCamera = std::min(distance.length(), minDistFromCamera);
+    distance = v2 - camera;
+    minDistFromCamera = std::min(distance.length(), minDistFromCamera);
+}
+
 
 
 
@@ -123,6 +132,11 @@ bool SphereP::traceRay(Ray &ray, float* tHit){
     }
 
 	return true;
+}
+
+void SphereP::setMinDistFromCamera(Vertex &camera){
+    minDistFromCamera = (center - camera).length() - radius;
+    minDistFromCamera = std::max(minDistFromCamera, 0.0f);
 }
 
 
