@@ -15,20 +15,34 @@ struct Ray{
     float &dx = direction.x;
     float &dy = direction.y;
     float &dz = direction.z;
-    float tMin;
-    float tMax;
+    float tMin = 0;
+    float tMax = INFINITY;
+
+    Ray(){}
     
     Ray(float x, float y, float z, float dx, float dy, float dz, float tMin, float tMax):
         x(x), y(y), z(z), dx(dx), dz(dz), tMin(tMin), tMax(tMax){}
 
     Ray(Vertex& position, Vertex& direction, float tMin, float tMax):
         tMin(tMin), tMax(tMax){
-            x = position.x;
-            y = position.y;
-            z = position.z;
-            dx = direction.x;
-            dy = direction.y;
-            dz = direction.z;
+            origin.x = position.x;
+            origin.y = position.y;
+            origin.z = position.z;
+            this->direction.x = direction.x;
+            this->direction.y = direction.y;
+            this->direction.z = direction.z;
+
+        }
+
+    void setProperties(Vertex& position, Vertex& direction, float tMin, float tMax){
+            origin.x = position.x;
+            origin.y = position.y;
+            origin.z = position.z;
+            this->direction.x = direction.x;
+            this->direction.y = direction.y;
+            this->direction.z = direction.z;
+            this->tMax = tMax;
+            this->tMin = tMin;
 
         }
 

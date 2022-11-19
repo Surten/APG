@@ -905,6 +905,8 @@ void sglRayTraceScene() {
 
   using std::thread;
   auto threadFun = [&](int threadNum, int start, int chunkSize){
+
+    Ray ray;
   // iterate over pixels in screen
   //#pragma omp parallel for schedule(static)
     for (int y = start; y < start + chunkSize; y++){
@@ -929,7 +931,7 @@ void sglRayTraceScene() {
             continue;
           }
 
-          Ray ray{cameraPosition, direction, near, maxT};
+          ray.setProperties(cameraPosition, direction, near, maxT);
           float t; // distance at which the ray hit
           bool hit = p->traceRay(ray, &t);
           if (hit){
