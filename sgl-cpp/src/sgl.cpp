@@ -10,8 +10,15 @@
 #include "sgl.h"
 #include "context.h"
 #include "Rasterizer.h"
+#include "Ray.h"
+#include "Primitive.h"
+
+#include <omp.h>
+#include <thread>
 
 #include <cmath>
+
+#define TWO_PI 6.2831853f
 
 Context* ConActive = nullptr;
 std::vector<Context*> ContextArray;
@@ -63,6 +70,8 @@ const char* sglGetErrorString(sglEErrorCode error)
 //---------------------------------------------------------------------------
 
 void sglInit(void) {
+  const auto processor_count = std::thread::hardware_concurrency();
+  std::cout << "processor count " << processor_count << std::endl;
   //init
 }
 
@@ -144,6 +153,20 @@ void sglBegin(sglEElementType mode) {
 }
 void sglEnd(void) {
   VBO *v = &ConActive->vbo;
+
+  if (ConActive->beginSceneActive){
+    Rasterizer rasterizer(ConActive);
+    rasterizer.vboToPrimitives();
+    v->ClearVBO();
+    return;
+  }
+
+
+  if (v->GetSize() == 0){
+    v->ClearVBO();
+    return;
+  }
+
   Matrix4f pvm = ConActive->GetPVMMatrix();
   for (size_t i = 0; i < v->GetSize(); i++)
   {
@@ -430,13 +453,22 @@ void sglArc(float x, float y, float z, float radius, float from, float to) {
     break;
   }
 
-    if(to < from){
-    std::swap(from, to);
+    // add two pi if from > to
+    float realAngle;
+    if (to > from){
+        realAngle = fabs(to - from);
+    } else {
+        realAngle = fabs(TWO_PI + to - from);
     }
-    double t = (to-from)/40;
-    for (double i = from; i < to; i+=t)
+
+    int numSegments = static_cast<int>(roundf(40 * realAngle / TWO_PI));
+    float angleDiff = realAngle / numSegments;
+    float angle = from;
+    // need n+1 vertices for n segments
+    for (double i = 0; i < numSegments + 1; i++)
     {
-      ConActive->vbo.InsertVertex(static_cast<float>(x+(radius*cos(i)))  , static_cast<float>(y+(radius*sin(i))), z, 1);
+      ConActive->vbo.InsertVertex(static_cast<float>(x+(radius*cos(angle)))  , static_cast<float>(y+(radius*sin(angle))), z, 1);
+      angle += angleDiff;
     }
 
   sglEnd();
@@ -751,15 +783,27 @@ void sglDisable(sglEEnableFlags cap) {
 // RayTracing oriented functions
 //---------------------------------------------------------------------------
 
-void sglBeginScene() {}
+void sglBeginScene() {
+  ConActive->beginSceneActive = true;
+  ConActive->discardPrimitives();
+  // TODO: handle invalid calls
+}
 
-void sglEndScene() {}
+void sglEndScene() {
+  ConActive->beginSceneActive = false;
+  // TODO: handle invalid calls
+}
 
 void sglSphere(const float x,
                const float y,
                const float z,
                const float radius)
-{}
+{
+  // TODO: handle calls out of beginScene()
+  Material mat{ConActive->currentMaterial};
+  SphereP* sphere = new SphereP{x, y, z, radius, mat};
+  ConActive->primitiveList.push_back(sphere);
+}
 
 void sglMaterial(const float r,
                  const float g,
@@ -769,7 +813,11 @@ void sglMaterial(const float r,
                  const float shine,
                  const float T,
                  const float ior)
-{}
+{
+  ConActive->currentMaterial.setProperties(r, g, b,
+                                           kd, ks,
+                                           shine, T, ior);
+}
 
 void sglPointLight(const float x,
                    const float y,
@@ -777,9 +825,148 @@ void sglPointLight(const float x,
                    const float r,
                    const float g,
                    const float b)
-{}
+{
+  Vertex position{x, y, z};
+  Color color{r, g, b};
+  PointLight light{position, color};
+  ConActive->pointLightList.push_back(light);
+}
 
-void sglRayTraceScene() {}
+void drawAxis(){
+  Vertex origin{0.0f, 0.0f, 0.0f, 1.0f};
+  Vertex      x{1.0f, 0.0f, 0.0f, 1.0f};
+  Vertex      y{0.0f, 1.0f, 0.0f, 1.0f};
+  Vertex      z{0.0f, 0.0f, 1.0f, 1.0f};
+
+  Matrix4f pvm = ConActive->GetPVMMatrix();
+
+  ConActive->VertexShader(pvm, origin);
+  ConActive->PerspectiveDivision(origin);
+  ConActive->ViewPortTransform(origin);
+  ConActive->VertexShader(pvm, x);
+  ConActive->PerspectiveDivision(x);
+  ConActive->ViewPortTransform(x);
+  ConActive->VertexShader(pvm, y);
+  ConActive->PerspectiveDivision(y);
+  ConActive->ViewPortTransform(y);
+  ConActive->VertexShader(pvm, z);
+  ConActive->PerspectiveDivision(z);
+  ConActive->ViewPortTransform(z);
+
+  Rasterizer rasterizer(ConActive);
+  sglColor3f(1.0f, 0.0f, 0.0f);
+  rasterizer.DrawLine(origin, x);
+  sglColor3f(0.0f, 1.0f, 0.0f);
+  rasterizer.DrawLine(origin, y);
+  sglColor3f(0.0f, 0.0f, 1.0f);
+  rasterizer.DrawLine(origin, z);
+}
+
+void sglRayTraceScene() {
+  Matrix4f projectionInv = Matrix4f(*ConActive->projectionStack.top);
+  projectionInv.invert();
+
+  Matrix4f modelviewInv = Matrix4f(*ConActive->modelViewStack.top);
+  modelviewInv.invert();
+
+  Matrix4f viewportInv = Matrix4f(ConActive->viewport.viewportMatrix);
+  viewportInv.invert();
+
+  Vertex cameraPosition{0.0f, 0.0f, 0.0f, 1.0f};
+  ConActive->MatrixMultVector(modelviewInv, cameraPosition);
+  cameraPosition.perspDivide();
+
+  using std::min;
+  using std::max;
+
+  // get near plane from projection matrix
+  // https://forums.structure.io/t/near-far-value-from-projection-matrix/3757
+  float m22 = - ConActive->projectionStack.top->matrix[10];
+  float m32 = - ConActive->projectionStack.top->matrix[11];
+  float far = (2.0f*m32)/(2.0f*m22-2.0f);
+  float near = ((m22-1.0f)*far)/(m22+1.0f);
+
+
+  Rasterizer rasterizer{ConActive};
+
+  int width = ConActive->frameWidth;
+  int height = ConActive->frameHeight;
+
+  Matrix4f mvpv_inv = modelviewInv * projectionInv * viewportInv;
+
+  // backface culling
+  std::vector<Primitive*> frontfacePrimitives;
+  for (auto &p : ConActive->primitiveList){
+    if (p->facesVector(cameraPosition)){
+      frontfacePrimitives.push_back(p);
+      p->setMinDistFromCamera(cameraPosition);
+    }
+  }
+
+  using std::thread;
+  auto threadFun = [&](int threadNum, int start, int chunkSize){
+
+    Ray ray;
+  // iterate over pixels in screen
+  //#pragma omp parallel for schedule(static)
+    for (int y = start; y < start + chunkSize; y++){
+      for (int x = 0; x < height; x++){
+        // transform pixel into world space
+        Vertex pxInWspc{static_cast<float>(y), static_cast<float>(x), -1.0f, 1.0f};
+        // ConActive->MatrixMultVector(viewportInv, pxInWspc);
+        // ConActive->MatrixMultVector(projectionInv, pxInWspc);
+        // ConActive->MatrixMultVector(modelviewInv, pxInWspc);
+        mvpv_inv.MultiplyVector(pxInWspc);
+        Vertex direction = pxInWspc - cameraPosition;
+        direction.normalize(); // ray direction
+
+        // iterate over primitives
+        for (auto& p : frontfacePrimitives){
+          float maxT = INFINITY;
+          if (ConActive->depthActive){
+            maxT = min(maxT, ConActive->depth_buffer[y * width + x]);
+          }
+          
+          if (p->minDistFromCamera > maxT){
+            continue;
+          }
+
+          ray.setProperties(cameraPosition, direction, near, maxT);
+          float t; // distance at which the ray hit
+          bool hit = p->traceRay(ray, &t);
+          if (hit){
+            if (dynamic_cast<TriangleP*>(p)){
+              x = x;
+            }
+            Vertex point{cameraPosition + t * ray.direction};
+            SCVertex screenVert{y, x, t};
+            Vertex normal = p->normalAt(point);
+            rasterizer.FragmentShader(screenVert, point, ray.direction, normal, p->material);
+            if (ConActive->depthActive){
+              ConActive->depth_buffer[y * width + x] = t;
+            }
+          } 
+        }
+      }
+    }
+  };
+  const auto processor_count = std::max(thread::hardware_concurrency(), 1u);
+  std::vector<thread> threadPool;
+  for (unsigned int i = 0; i < processor_count; i++)
+  {
+    int chunkSize = width / processor_count;
+    int start = chunkSize * i;
+    if (i == processor_count -  1){
+      chunkSize = width - ((processor_count - 1) * chunkSize); // padding if the processor count is not factor of width
+    }
+    threadPool.push_back(thread(threadFun, i, start, chunkSize));
+  }
+  for (auto &t : threadPool){
+    t.join();
+  }
+
+  // drawAxis();
+}
 
 void sglRasterizeScene() {}
 

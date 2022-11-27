@@ -4,6 +4,7 @@
 #include <vector>
 #include <algorithm>
 #include "Matrix4f.h"
+#include "Vertex.h"
 
 /**
  * Viewport holds info about transforming Normalized device coordinates to Screen coordinates 
@@ -18,16 +19,6 @@ struct Viewport{
     Matrix4f viewportMatrix;
 
     void CreateViewportMatrix();
-};
-
-struct Vertex{
-    float x;
-    float y;
-    float z;
-    float w;
-    Vertex(){}
-    //Vertex(Vertex& v){x=v.x;y=v.y;z=v.z;w=v.w;}
-    Vertex(float xx, float yy, float zz, float ww) : x(xx), y(yy), z(zz), w(ww){}
 };
 
 

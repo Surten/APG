@@ -1,6 +1,9 @@
 #ifndef _MATRIX_H_
 #define _MATRIX_H_
 #include <iostream>
+#include "Vertex.h"
+#include <algorithm>
+#include <cmath>
 
 /**
  * Holds Matrix 4x4 and its operations
@@ -25,6 +28,10 @@ public:
     void InsertMatrix(float m[]);
     Matrix4f operator* (const Matrix4f& m1);
     Matrix4f(const Matrix4f&);
+
+    void MultiplyVector(Vertex &v);
+
+    int invert();
     
 
 };
@@ -39,6 +46,7 @@ public:
 
     void MultiplyFromRight(Matrix4f mat);
     void MultiplyFromLeft(Matrix4f mat);
+
 
     MatrixLinkedList();
     ~MatrixLinkedList();

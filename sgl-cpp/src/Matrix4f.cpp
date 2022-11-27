@@ -139,6 +139,112 @@ void MatrixLinkedList::MultiplyFromLeft(Matrix4f m1){
 }
 
 
+// inverse matrix computation using gauss_jacobi method 
+  // source: N.R. in C
+  // if matrix is regular = computatation successfull = returns 0
+  // in case of singular matrix returns 1
+int Matrix4f::invert()
+{
+    int indxc[4],indxr[4],ipiv[4];
+    int i,icol,irow,j,k,l,ll,n;
+    float big,dum,pivinv,temp;
+    // satisfy the compiler
+    icol = irow = 0;
+
+    float x[4][4];
+    for (int _r = 0; _r < 4; _r++){
+        for (int _c = 0; _c < 4; _c++){
+            x[_c][_r] = matrix[_r * 4 + _c];
+        }
+    }
+        
+    // the size of the matrix
+    n = 4;
+        
+    for ( j = 0 ; j < n ; j++) /* zero pivots */
+        ipiv[j] = 0;
+        
+    for ( i = 0; i < n; i++)
+        {
+        big = 0.0;
+        for (j = 0 ; j < n ; j++)
+            if (ipiv[j] != 1)
+            for ( k = 0 ; k<n ; k++)
+                {
+                if (ipiv[k] == 0)
+                    {
+                    if (fabs(x[k][j]) >= big)
+                        {
+                        big = fabs(x[k][j]);
+                        irow = j;
+                        icol = k;
+                        }
+                    }
+                else
+                    if (ipiv[k] > 1)
+                    return 1; /* singular matrix */
+                }
+        ++(ipiv[icol]);
+        if (irow != icol)
+            {
+            for ( l = 0 ; l<n ; l++)
+                {
+                temp = x[l][icol];
+                x[l][icol] = x[l][irow];
+                x[l][irow] = temp;
+                }
+            }
+        indxr[i] = irow;
+        indxc[i] = icol;
+        if (x[icol][icol] == 0.0)
+            return 1; /* singular matrix */
+                
+        pivinv = 1.0 / x[icol][icol];
+        x[icol][icol] = 1.0 ;
+        for ( l = 0 ; l<n ; l++)
+            x[l][icol] = x[l][icol] * pivinv ;
+                
+        for (ll = 0 ; ll < n ; ll++)
+            if (ll != icol)
+            {
+                dum = x[icol][ll];
+                x[icol][ll] = 0.0;
+                for ( l = 0 ; l<n ; l++)
+                x[l][ll] = x[l][ll] - x[l][icol] * dum ;
+            }
+        }
+    for ( l = n; l--; )
+        {
+        if (indxr[l] != indxc[l])
+            for ( k = 0; k<n ; k++)
+            {
+                temp = x[indxr[l]][k];
+                x[indxr[l]][k] = x[indxc[l]][k];
+                x[indxc[l]][k] = temp;
+            }
+        }
+
+
+    for (int _r = 0; _r < 4; _r++){
+        for (int _c = 0; _c < 4; _c++){
+            matrix[_r * 4 + _c] = x[_c][_r];
+        }
+    }
+        
+    return 0 ; // matrix is regular .. inversion has been succesfull
+}
+
+void Matrix4f::MultiplyVector(Vertex &v){
+    float xx,yy,zz,ww;
+	xx = matrix[0]*v.x + matrix[1]*v.y + matrix[2]*v.z + matrix[3]*v.w;
+	yy = matrix[4]*v.x + matrix[5]*v.y + matrix[6]*v.z + matrix[7]*v.w;
+	zz = matrix[8]*v.x + matrix[9]*v.y + matrix[10]*v.z + matrix[11]*v.w;
+	ww = matrix[12]*v.x + matrix[13]*v.y + matrix[14]*v.z + matrix[15]*v.w;
+	v.x=xx;
+	v.y=yy;
+	v.z=zz;
+	v.w=ww;
+}
 
 void MatrixLinkedList::Push(Matrix4f& m){
     Matrix4f *mat = new Matrix4f(m);

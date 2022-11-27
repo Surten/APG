@@ -1,5 +1,7 @@
 #include "Rasterizer.h"
 #include <cmath>
+#include "Primitive.h"
+
 
 Rasterizer::Rasterizer(Context* ContextActive){
     Con = ContextActive;
@@ -343,12 +345,87 @@ void Rasterizer::ScanLineFill(std::vector<SLFEdge> &edges, int yMax, int yMin){
 
 
 
+void Rasterizer::vboToPrimitives(){
+    std::vector<Vertex> &vbo = Con->vbo.vertex_buffer;
+    size_t vboSize = Con->vbo.GetSize();
+    if (vboSize < 3){
+        return;
+    }
+
+    switch(Con->EleType){
+        case SGL_POINTS:
+        case SGL_LINES:
+        case SGL_LINE_STRIP:
+        case SGL_LINE_LOOP:
+        case SGL_LAST_ELEMENT_TYPE:
+        case SGL_AREA_LIGHT:
+        default:
+             // not supported
+            break;
+  
+        case SGL_TRIANGLES:
+            for (size_t i = 0; i < vboSize - 2; i++){
+                TriangleP* tri = new TriangleP{vbo[i], vbo[i+1], vbo[i+2], Con->currentMaterial};
+                TriangleP* tri2 = new TriangleP{vbo[i], vbo[i+2], vbo[i+1], Con->currentMaterial};
+                Con->primitiveList.push_back(tri);
+                Con->primitiveList.push_back(tri2);
+            }
+            break;
+  
+        case SGL_POLYGON:
+            // Convert into triangle fan
+            Vertex first = vbo[0];
+            for (size_t i = 1; i < vboSize - 1; i++){
+                Vertex second = vbo[i];
+                Vertex third = vbo[i + 1];
+                TriangleP* tri = new TriangleP{first, second, third, Con->currentMaterial};
+                TriangleP* tri2 = new TriangleP{first, third, second, Con->currentMaterial};
+                Con->primitiveList.push_back(tri);
+                Con->primitiveList.push_back(tri2);
+            }
+            break;
+    }
+
+}
 
 
 
+float clamp01(float num){
+    return std::min(std::max(num, 0.0f), 1.0f);
+}
 
 void Rasterizer::FragmentShader(SCVertex &v){
     Con->color_buffer[3*(v.y*Con->frameWidth + v.x)] = Con->currentColor[0];
     Con->color_buffer[3*(v.y*Con->frameWidth + v.x) + 1] = Con->currentColor[1];
     Con->color_buffer[3*(v.y*Con->frameWidth + v.x) + 2] = Con->currentColor[2];
+}
+
+
+void Rasterizer::FragmentShader(SCVertex &v, Vertex &position, Vertex &lookDirection, Vertex &normal, Material &mat){
+    Color color{.0f, .0f, .0f};
+
+    using std::max;
+    using std::min;
+    
+    for (PointLight light : Con->pointLightList){
+        // phong
+        // ambient is neglected = 0
+
+        // diffuse
+        Vertex L = position - light.position;  // light direction
+        L.normalize();
+        float cosA = dot(L, normal);
+        color += light.color * (mat.color * mat.kd) * max(cosA, 0.0f);
+        // specular
+        Vertex R = 2 * dot(L, normal) * normal - L; // reflected
+        R.normalize();
+        float cosB = dot(lookDirection, R);
+        color += light.color  * mat.ks * powf(max(cosB, 0.0f), mat.shine);
+    }
+    Con->color_buffer[3*(v.y*Con->frameWidth + v.x)    ] = color.r;
+    Con->color_buffer[3*(v.y*Con->frameWidth + v.x) + 1] = color.g;
+    Con->color_buffer[3*(v.y*Con->frameWidth + v.x) + 2] = color.b;
+    // Con->color_buffer[3*(v.y*Con->frameWidth + v.x)    ] = mat.color.r;
+    // Con->color_buffer[3*(v.y*Con->frameWidth + v.x) + 1] = mat.color.g;
+    // Con->color_buffer[3*(v.y*Con->frameWidth + v.x) + 2] = mat.color.b;
 }

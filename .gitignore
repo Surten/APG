@@ -1,2 +1,6 @@
 build
 .vscode
+testapp_d.exe
+testapp_d.pdb
+results/*.tga
+results/*.neon
