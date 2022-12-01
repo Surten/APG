@@ -17,6 +17,7 @@ struct Ray{
     float &dz = direction.z;
     float tMin = 0;
     float tMax = INFINITY;
+    bool refractiveRay = false;
 
     Ray(){}
     

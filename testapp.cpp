@@ -55,8 +55,8 @@
 #ifdef TEST4
 #define WIDTH 512
 #define HEIGHT 512
-#define TEST_4A
-#define TEST_4B
+//#define TEST_4A
+//#define TEST_4B
 #define TEST_4C
 #endif
 

@@ -22,20 +22,10 @@ Ray Primitive::getReflectedRay(Ray &ray, Vertex &point){
     Vertex reverseRayDir = ray.direction * (-1);
     Vertex normal = normalAt(point);
     Vertex R = 2 * dot(reverseRayDir, normal) * normal - reverseRayDir; 
-    return Ray(point+(normal*0.0f), R, 0.0f, INFINITY);
+    return Ray(point + (normal * 0.01f), R, 0.0001f, INFINITY);
 }
 
 Ray Primitive::getRefractedRay(Ray &ray, Vertex &point){
-  
-// The following code fragment computes the direction of refracted ray (dir)
-// given the primary ray direction (hitInfo.GetRay()->GetDir()) and the surface normal (normal)
-// Note: hitInfo.GetDotProd()  =  DotProd(hitInfo.GetRay()->GetDir(), hitInfo.GetNormal())
-
-  // get value of index of refraction  coefficient for intersection point
-
-  // currently, rays are not bended according to spectral wavelegth
-
-  // here is the point to be modified for spectral-dependent effects
 
   Vertex normal = normalAt(point);
   Vertex dir;
@@ -58,10 +48,10 @@ Ray Primitive::getRefractedRay(Ray &ray, Vertex &point){
   // Check for total internal reflection, do nothing if it applies.
   if (sqrterm > 0.0f) {
     sqrterm = dotProd * gamma + sqrt(sqrterm);
-    Vertex dir = -sqrterm * normal + ray.direction * gamma;
+    dir = (-sqrterm * normal) + (ray.direction * gamma);
   }
   else {}
-  return Ray(point, dir, 0.0f, INFINITY);
+  return Ray(point - (normal*0.01f), dir, 0.0f, INFINITY);
 
 }
 
@@ -198,6 +188,24 @@ Vertex SphereP::normalAt(Vertex &v){
     normal.normalize();
     return normal;
 }
+/*
+bool SphereP::traceRay(Ray &ray, float* t) {
+
+Vertex dst = ray.origin - center;
+const float b = dot(dst, ray.direction);
+const float c = dot(dst, dst) - radius*radius;
+const float d = b*b - c;
+
+if(d > 0) {
+    *t = -b - sqrtf(d);
+    if (*t < 0.0f)
+    *t = -b + sqrtf(d);
+
+    return true;
+}
+return false;
+}
+*/
 
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
 bool SphereP::traceRay(Ray &ray, float* tHit){

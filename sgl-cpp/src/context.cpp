@@ -77,7 +77,7 @@ Primitive* Context::findFirstIntersection(Ray &ray, float &t){
 		if(!hit) continue;
 		//if (currentObject == primitiveList[i]) continue;
 		if(currentT < 0.001) continue;
-		if(!primitiveList[i]->facesVector(ray.origin)) continue;
+		if(/*!ray.refractiveRay && */!primitiveList[i]->facesVector(ray.origin)) continue;
 		if (t < 0 || currentT < t){
 			t = currentT;
 			ret = primitiveList[i];

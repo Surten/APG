@@ -895,6 +895,7 @@ Color myRayTrace(Ray inRay, int depth, float coeficient){
 
   Vertex positionHit = inRay.origin + (inRay.direction * hitT);
   Vertex lookDir = inRay.direction * (-1);
+  Vertex normal = currentPrimitive->normalAt(positionHit);
   lookDir.normalize();
 
   if(coeficient * currentPrimitive->material.ks > 0.01f){
@@ -902,18 +903,20 @@ Color myRayTrace(Ray inRay, int depth, float coeficient){
     retColor += myRayTrace(reflectedRay, depth+1, coeficient * currentPrimitive->material.ks);
   }
 
-  // if(coeficient * currentPrimitive->material.T > 0.01f){
-  //  Ray refractedRay = currentPrimitive->getRefractedRay(inRay, positionHit);
-  //  if(refractedRay.direction.length() > 0.0001f){   //perfect reflection check
-  //   retColor += myRayTrace(refractedRay, depth+1, coeficient * currentPrimitive->material.T);
-  //  }
-  // }
+  if(coeficient * currentPrimitive->material.T > 0.01f){
+   Ray refractedRay = currentPrimitive->getRefractedRay(inRay, positionHit);
+   if(refractedRay.direction.length() > 0.0001f){   //perfect reflection check
+    refractedRay.refractiveRay = !refractedRay.refractiveRay;
+    retColor += myRayTrace(refractedRay, depth+1, coeficient * currentPrimitive->material.T);
+   }
+  }
 
   for(auto light : ConActive->pointLightList){
     Vertex lightDir(light.position - positionHit);
     lightDir.normalize();
-    Ray shadowRay(positionHit, lightDir, 0, INFINITY);
-    if(traceShadowRay(shadowRay, light))  retColor += currentPrimitive->getColorFromLightSource(light, positionHit, lookDir) * coeficient;
+    Ray shadowRay(positionHit + (normal*0.01f), lightDir, 0.001f, INFINITY);
+    if(traceShadowRay(shadowRay, light))  
+      retColor += currentPrimitive->getColorFromLightSource(light, positionHit, lookDir) * coeficient;
   }
 
   return retColor;
@@ -967,11 +970,15 @@ void sglRayTraceScene() {
 
   // iterate over pixels in screen
   //#pragma omp parallel for schedule(static)
+ // bool found = false;
     for (int y = 0/*start*/; y < width/*start + chunkSize*/; y++){
       for (int x = 0; x < height; x++){
-        if(y == 238 && x == 156){
-         printf("%d %d \n", y, x);
-        }
+        // if((y == 270 && x== 399)) found = true;
+        // if(!found) 
+        // continue;
+
+        
+
         // transform pixel into world space
         Vertex pxInWspc{static_cast<float>(y), static_cast<float>(x), -1.0f, 1.0f};
         mvpv_inv.MultiplyVector(pxInWspc);
@@ -984,38 +991,15 @@ void sglRayTraceScene() {
 
         // if(x > (float)height/4.0f && x < (float)height /2.0f && y > (float)width/4.0f && y < (float)width*1.0f /2.0f && c.r <= 0.01 && c.g <= 0.01 && c.b <= 0.01){
         //   printf("%d %d \n", y, x);
-        //   c.r = 1;
+        //   c.r = 1; 
+        // }
+
+        // if(y == 270 && x== 399){
+        //  c.r = 1; c.g = 0; c.b = 0;
         // }
 
         rasterizer.FragmentShader(SCVertex(y, x, 0), c);
 
-        // iterate over primitives
-        /*for (auto& p : frontfacePrimitives){
-          float maxT = INFINITY;
-          if (ConActive->depthActive){
-            maxT = min(maxT, ConActive->depth_buffer[y * width + x]);
-          }
-          
-          if (p->minDistFromCamera > maxT){
-            continue;
-          }
-
-          ray.setProperties(cameraPosition, direction, near, maxT);
-          float t; // distance at which the ray hit
-          bool hit = p->traceRay(ray, &t);
-          if (hit){
-            if (dynamic_cast<TriangleP*>(p)){
-              x = x;
-            }
-            Vertex point{cameraPosition + t * ray.direction};
-            SCVertex screenVert{y, x, t};
-            Vertex normal = p->normalAt(point);
-            rasterizer.FragmentShader(screenVert, point, ray.direction, normal, p->material);
-            if (ConActive->depthActive){
-              ConActive->depth_buffer[y * width + x] = t;
-            }
-          } 
-        }*/
       }
     }
   //};
