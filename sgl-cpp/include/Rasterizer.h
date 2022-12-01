@@ -89,6 +89,7 @@ public:
     void Bresenham3D(SCVertex v1, const SCVertex v2);
 
     void FragmentShader(SCVertex &v);
+    void FragmentShader(SCVertex &v, Color &c);
     void FragmentShader(SCVertex &v, Vertex &position, Vertex &lookDirection, Vertex &normal, Material &mat);
 
 

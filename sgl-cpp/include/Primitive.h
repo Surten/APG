@@ -20,6 +20,9 @@ public:
     virtual void transform(Matrix4f &mat) = 0;
     virtual bool facesVector(Vertex &v) = 0;
     virtual void setMinDistFromCamera(Vertex &camera) {minDistFromCamera = 0.0f;}
+    Color getColorFromLightSource(PointLight &light, Vertex &position, Vertex &lookDirection);
+    Ray getReflectedRay(Ray &ray, Vertex &point);
+    Ray getRefractedRay(Ray &ray, Vertex &point);
 };
 
 
@@ -55,7 +58,7 @@ public:
             e0 = v2 - v1;
             e1 = v1 - v0;
             e2 = v2 - v0;
-            normal = cross(e0, e1);
+            normal = cross(e1, e2);
             normal.normalize();
         }
     ~TriangleP(){}
@@ -65,6 +68,7 @@ public:
     void transform(Matrix4f &mat) override;
     bool facesVector(Vertex &v) override;
     void setMinDistFromCamera(Vertex &camera) override;
+    
 
 };
 
