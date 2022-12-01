@@ -832,7 +832,7 @@ void sglPointLight(const float x,
   ConActive->pointLightList.push_back(light);
 }
 
-void drawAxis(){
+/*void drawAxis(){
   Vertex origin{0.0f, 0.0f, 0.0f, 1.0f};
   Vertex      x{1.0f, 0.0f, 0.0f, 1.0f};
   Vertex      y{0.0f, 1.0f, 0.0f, 1.0f};
@@ -860,7 +860,58 @@ void drawAxis(){
   rasterizer.DrawLine(origin, y);
   sglColor3f(0.0f, 0.0f, 1.0f);
   rasterizer.DrawLine(origin, z);
+}*/
+
+
+
+
+Color myRayTrace(Ray inRay, int depth, int &numSamples){
+  Color retColor;
+  if(depth > 3){return retColor;}
+
+  float hitT = -1;
+  Primitive* currentPrimitive = ConActive->findFirstIntersection(inRay, hitT, nullptr);
+  //printf("%f, %f, %f\n", currentPrimitive->material.color.r, currentPrimitive->material.color.g, currentPrimitive->material.color.b);
+
+
+  if(currentPrimitive == nullptr || hitT < 0){
+    // todo for assignment 5 - insert enviroment map color here
+    retColor.r = ConActive->clearColor[0];
+    retColor.g = ConActive->clearColor[1];
+    retColor.b = ConActive->clearColor[2];
+    return retColor;
+  }
+  numSamples++;
+
+  Vertex positionHit = inRay.origin + (inRay.direction * hitT);
+  Vertex lookDir = inRay.direction * (-1);
+  lookDir.normalize();
+
+  Ray reflectedRay = currentPrimitive->getReflectedRay(inRay, positionHit);
+  retColor += myRayTrace(reflectedRay, depth+1, numSamples);
+
+  //if(currentPrimitive->material.T > 0.01f){
+  //  Ray refractedRay = currentPrimitive->getRefractedRay(inRay, positionHit);
+  //  retColor += myRayTrace(reflectedRay, depth+1, numSamples);
+  //}
+
+
+  //printf("my t hit %f\n", hitT);
+
+  for(auto light : ConActive->pointLightList){
+    retColor += currentPrimitive->getColorFromLightSource(light, positionHit, lookDir);
+  }
+
+  // cast shadow rays and manage visibilty
+
+  // cast a refractive ray up to a count of 8
+
+  // cast a specular ray up to a count of 8
+
+  return retColor;
 }
+
+
 
 void sglRayTraceScene() {
   Matrix4f projectionInv = Matrix4f(*ConActive->projectionStack.top);
@@ -893,7 +944,7 @@ void sglRayTraceScene() {
   int height = ConActive->frameHeight;
 
   Matrix4f mvpv_inv = modelviewInv * projectionInv * viewportInv;
-
+/*
   // backface culling
   std::vector<Primitive*> frontfacePrimitives;
   for (auto &p : ConActive->primitiveList){
@@ -901,27 +952,40 @@ void sglRayTraceScene() {
       frontfacePrimitives.push_back(p);
       p->setMinDistFromCamera(cameraPosition);
     }
-  }
+  }*/
 
-  using std::thread;
-  auto threadFun = [&](int threadNum, int start, int chunkSize){
+  //using std::thread;
+  //auto threadFun = [&](int threadNum, int start, int chunkSize){
 
-    Ray ray;
   // iterate over pixels in screen
   //#pragma omp parallel for schedule(static)
-    for (int y = start; y < start + chunkSize; y++){
+    for (int y = 0/*start*/; y < width/*start + chunkSize*/; y++){
       for (int x = 0; x < height; x++){
+        //if(x == 174 && y == 298){
+        //  printf("%d %d \n", y, x);
+        //}
         // transform pixel into world space
         Vertex pxInWspc{static_cast<float>(y), static_cast<float>(x), -1.0f, 1.0f};
-        // ConActive->MatrixMultVector(viewportInv, pxInWspc);
-        // ConActive->MatrixMultVector(projectionInv, pxInWspc);
-        // ConActive->MatrixMultVector(modelviewInv, pxInWspc);
         mvpv_inv.MultiplyVector(pxInWspc);
         Vertex direction = pxInWspc - cameraPosition;
         direction.normalize(); // ray direction
 
+        Ray ray(cameraPosition, direction, near, INFINITY);
+        int numSamples = 0;
+        Color c = myRayTrace(ray, 0, numSamples);
+        c.r = c.r / (float)numSamples;
+        c.g = c.g / (float)numSamples;
+        c.b = c.b / (float)numSamples;
+
+        //if(x > (float)height/3.0f && x < (float)height*2.0f /3.0f && y > (float)width/3.0f && y < (float)width*2.0f /3.0f && c.r <= 0.01 && c.g <= 0.01 && c.b <= 0.01){
+        //  printf("%d %d \n", y, x);
+        //  c.r = 1;
+        //}
+
+        rasterizer.FragmentShader(SCVertex(y, x, 0), c);
+
         // iterate over primitives
-        for (auto& p : frontfacePrimitives){
+        /*for (auto& p : frontfacePrimitives){
           float maxT = INFINITY;
           if (ConActive->depthActive){
             maxT = min(maxT, ConActive->depth_buffer[y * width + x]);
@@ -946,24 +1010,24 @@ void sglRayTraceScene() {
               ConActive->depth_buffer[y * width + x] = t;
             }
           } 
-        }
+        }*/
       }
     }
-  };
-  const auto processor_count = std::max(thread::hardware_concurrency(), 1u);
-  std::vector<thread> threadPool;
-  for (unsigned int i = 0; i < processor_count; i++)
-  {
-    int chunkSize = width / processor_count;
-    int start = chunkSize * i;
-    if (i == processor_count -  1){
-      chunkSize = width - ((processor_count - 1) * chunkSize); // padding if the processor count is not factor of width
-    }
-    threadPool.push_back(thread(threadFun, i, start, chunkSize));
-  }
-  for (auto &t : threadPool){
-    t.join();
-  }
+  //};
+  // const auto processor_count = std::max(thread::hardware_concurrency(), 1u);
+  // std::vector<thread> threadPool;
+  // for (unsigned int i = 0; i < processor_count; i++)
+  // {
+  //   int chunkSize = width / processor_count;
+  //   int start = chunkSize * i;
+  //   if (i == processor_count -  1){
+  //     chunkSize = width - ((processor_count - 1) * chunkSize); // padding if the processor count is not factor of width
+  //   }
+  //   threadPool.push_back(thread(threadFun, i, start, chunkSize));
+  // }
+  // for (auto &t : threadPool){
+  //   t.join();
+  // }
 
   // drawAxis();
 }
