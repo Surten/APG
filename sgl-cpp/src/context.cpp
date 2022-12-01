@@ -66,7 +66,7 @@ void Context::discardPrimitives(){
 	primitiveList.clear();
 }
 
-Primitive* Context::findFirstIntersection(Ray ray, float &t, Primitive* currentObject){
+Primitive* Context::findFirstIntersection(Ray &ray, float &t){
 
 	Primitive* ret = nullptr;
 
@@ -76,7 +76,7 @@ Primitive* Context::findFirstIntersection(Ray ray, float &t, Primitive* currentO
 		bool hit = primitiveList[i]->traceRay(ray, &currentT);
 		if(!hit) continue;
 		//if (currentObject == primitiveList[i]) continue;
-		if(currentT < -0.0001) continue;
+		if(currentT < 0.001) continue;
 		if(!primitiveList[i]->facesVector(ray.origin)) continue;
 		if (t < 0 || currentT < t){
 			t = currentT;

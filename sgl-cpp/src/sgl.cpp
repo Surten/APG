@@ -863,14 +863,24 @@ void sglPointLight(const float x,
 }*/
 
 
+bool traceShadowRay(Ray &ray, PointLight &light){
+  float hitT = -1;
+  float distance = (light.position - ray.origin).length() - 0.01f;  // -0.01f is here to handle edge case where the light is too close to the wall
+  ConActive->findFirstIntersection(ray, hitT);
+  // if(!(hitT > distance || hitT == -1)){
+  //   printf("here\n");
+  // }
+  return (hitT > distance || hitT == -1);
+}
 
 
-Color myRayTrace(Ray inRay, int depth, int &numSamples){
+
+Color myRayTrace(Ray inRay, int depth, float coeficient){
   Color retColor;
-  if(depth > 3){return retColor;}
+  if(depth > 8){return retColor;}
 
   float hitT = -1;
-  Primitive* currentPrimitive = ConActive->findFirstIntersection(inRay, hitT, nullptr);
+  Primitive* currentPrimitive = ConActive->findFirstIntersection(inRay, hitT);
   //printf("%f, %f, %f\n", currentPrimitive->material.color.r, currentPrimitive->material.color.g, currentPrimitive->material.color.b);
 
 
@@ -881,32 +891,30 @@ Color myRayTrace(Ray inRay, int depth, int &numSamples){
     retColor.b = ConActive->clearColor[2];
     return retColor;
   }
-  numSamples++;
+  
 
   Vertex positionHit = inRay.origin + (inRay.direction * hitT);
   Vertex lookDir = inRay.direction * (-1);
   lookDir.normalize();
 
-  Ray reflectedRay = currentPrimitive->getReflectedRay(inRay, positionHit);
-  retColor += myRayTrace(reflectedRay, depth+1, numSamples);
-
-  //if(currentPrimitive->material.T > 0.01f){
-  //  Ray refractedRay = currentPrimitive->getRefractedRay(inRay, positionHit);
-  //  retColor += myRayTrace(reflectedRay, depth+1, numSamples);
-  //}
-
-
-  //printf("my t hit %f\n", hitT);
-
-  for(auto light : ConActive->pointLightList){
-    retColor += currentPrimitive->getColorFromLightSource(light, positionHit, lookDir);
+  if(coeficient * currentPrimitive->material.ks > 0.01f){
+    Ray reflectedRay = currentPrimitive->getReflectedRay(inRay, positionHit);
+    retColor += myRayTrace(reflectedRay, depth+1, coeficient * currentPrimitive->material.ks);
   }
 
-  // cast shadow rays and manage visibilty
+  // if(coeficient * currentPrimitive->material.T > 0.01f){
+  //  Ray refractedRay = currentPrimitive->getRefractedRay(inRay, positionHit);
+  //  if(refractedRay.direction.length() > 0.0001f){   //perfect reflection check
+  //   retColor += myRayTrace(refractedRay, depth+1, coeficient * currentPrimitive->material.T);
+  //  }
+  // }
 
-  // cast a refractive ray up to a count of 8
-
-  // cast a specular ray up to a count of 8
+  for(auto light : ConActive->pointLightList){
+    Vertex lightDir(light.position - positionHit);
+    lightDir.normalize();
+    Ray shadowRay(positionHit, lightDir, 0, INFINITY);
+    if(traceShadowRay(shadowRay, light))  retColor += currentPrimitive->getColorFromLightSource(light, positionHit, lookDir) * coeficient;
+  }
 
   return retColor;
 }
@@ -961,9 +969,9 @@ void sglRayTraceScene() {
   //#pragma omp parallel for schedule(static)
     for (int y = 0/*start*/; y < width/*start + chunkSize*/; y++){
       for (int x = 0; x < height; x++){
-        //if(x == 174 && y == 298){
-        //  printf("%d %d \n", y, x);
-        //}
+        if(y == 238 && x == 156){
+         printf("%d %d \n", y, x);
+        }
         // transform pixel into world space
         Vertex pxInWspc{static_cast<float>(y), static_cast<float>(x), -1.0f, 1.0f};
         mvpv_inv.MultiplyVector(pxInWspc);
@@ -971,16 +979,13 @@ void sglRayTraceScene() {
         direction.normalize(); // ray direction
 
         Ray ray(cameraPosition, direction, near, INFINITY);
-        int numSamples = 0;
-        Color c = myRayTrace(ray, 0, numSamples);
-        c.r = c.r / (float)numSamples;
-        c.g = c.g / (float)numSamples;
-        c.b = c.b / (float)numSamples;
+        Color c = myRayTrace(ray, 0, 1.0f);
 
-        //if(x > (float)height/3.0f && x < (float)height*2.0f /3.0f && y > (float)width/3.0f && y < (float)width*2.0f /3.0f && c.r <= 0.01 && c.g <= 0.01 && c.b <= 0.01){
-        //  printf("%d %d \n", y, x);
-        //  c.r = 1;
-        //}
+
+        // if(x > (float)height/4.0f && x < (float)height /2.0f && y > (float)width/4.0f && y < (float)width*1.0f /2.0f && c.r <= 0.01 && c.g <= 0.01 && c.b <= 0.01){
+        //   printf("%d %d \n", y, x);
+        //   c.r = 1;
+        // }
 
         rasterizer.FragmentShader(SCVertex(y, x, 0), c);
 

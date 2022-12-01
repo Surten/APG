@@ -73,7 +73,7 @@ public:
 
 
 	void discardPrimitives();
-	Primitive* findFirstIntersection(Ray ray, float &t, Primitive* currentObject);
+	Primitive* findFirstIntersection(Ray &ray, float &t);
 
 };
 

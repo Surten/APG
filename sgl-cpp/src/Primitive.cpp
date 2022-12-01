@@ -22,7 +22,7 @@ Ray Primitive::getReflectedRay(Ray &ray, Vertex &point){
     Vertex reverseRayDir = ray.direction * (-1);
     Vertex normal = normalAt(point);
     Vertex R = 2 * dot(reverseRayDir, normal) * normal - reverseRayDir; 
-    return Ray(point, R, 0, INFINITY);
+    return Ray(point+(normal*0.0f), R, 0.0f, INFINITY);
 }
 
 Ray Primitive::getRefractedRay(Ray &ray, Vertex &point){
@@ -43,9 +43,9 @@ Ray Primitive::getRefractedRay(Ray &ray, Vertex &point){
 
   float dotProd = dot(ray.direction, normal);
 
-  if (dotProd < 0.0) {
+  if (dotProd < 0.0f) {
     // from outside into the inside of object
-    gamma = 1.0 / material.ior;
+    gamma = 1.0f / material.ior;
   }
   else {
     // from the inside to outside of object
@@ -53,15 +53,15 @@ Ray Primitive::getRefractedRay(Ray &ray, Vertex &point){
     dotProd = -dotProd;
     normal = normal * (-1);
   }
-  sqrterm = 1.0 - gamma * gamma * (1.0 - dotProd * dotProd);
+  sqrterm = 1.0f - gamma * gamma * (1.0f - dotProd * dotProd);
 
   // Check for total internal reflection, do nothing if it applies.
-  if (sqrterm > 0.0) {
+  if (sqrterm > 0.0f) {
     sqrterm = dotProd * gamma + sqrt(sqrterm);
     Vertex dir = -sqrterm * normal + ray.direction * gamma;
   }
-  else  {}
-  return Ray(point, dir, 0, INFINITY);
+  else {}
+  return Ray(point, dir, 0.0f, INFINITY);
 
 }
 
@@ -133,18 +133,18 @@ bool TriangleP::traceRay(Ray &ray, float *tHit) {
     *tHit = -1;
 	Vertex s1 = cross(ray.direction, e2);
 	float divisor = dot(s1, e1);
-	if (divisor == 0.0001)
+	if (divisor == 0.00001)
 		return false;
 	float invDivisor = 1.f / divisor;
 	// Compute first barycentric coordinate
 	Vertex d = ray.origin - v0;
 	float b1 = dot(d, s1) * invDivisor;
-	if (b1 < 0.001 || b1 > 1.001)
+	if (b1 < 0.0001 || b1 > 1.0001)
 		return false;
 	// Compute second barycentric coordinate
 	Vertex s2 = cross(d, e1);
 	float b2 = dot(ray.direction, s2) * invDivisor;
-	if (b2 < 0.001 || b1 + b2 > 1.001)
+	if (b2 < 0.0001 || b1 + b2 > 1.0001)
 		return false;
 	// Compute _t_ to intersection point
 	float t = dot(e2, s2) * invDivisor;
@@ -215,9 +215,9 @@ bool SphereP::traceRay(Ray &ray, float* tHit){
         std::swap(t0, t1);
     }
 
-    if (t0 < 0){
+    if (t0 < 0.0f){
         t0 = t1;
-        if (t0 < 0){
+        if (t0 < 0.0f){
             return false;
         }
     }
