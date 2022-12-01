@@ -22,7 +22,8 @@ Ray Primitive::getReflectedRay(Ray &ray, Vertex &point){
     Vertex reverseRayDir = ray.direction * (-1);
     Vertex normal = normalAt(point);
     Vertex R = 2 * dot(reverseRayDir, normal) * normal - reverseRayDir; 
-    return Ray(point + (normal * 0.01f), R, 0.0001f, INFINITY);
+    Vertex originR = point + (normal * 0.01f);
+    return Ray(originR, R, 0.0001f, INFINITY);
 }
 
 Ray Primitive::getRefractedRay(Ray &ray, Vertex &point){
@@ -51,14 +52,16 @@ Ray Primitive::getRefractedRay(Ray &ray, Vertex &point){
     dir = (-sqrterm * normal) + (ray.direction * gamma);
   }
   else {}
-  return Ray(point - (normal*0.01f), dir, 0.0f, INFINITY);
+  Vertex originR = point - (normal * 0.01f);
+  return Ray(originR, dir, 0.0f, INFINITY);
 
 }
 
 
 
 bool TriangleP::facesVector(Vertex &v){
-    return dot(v - v0, normal) > 0.0f;
+    Vertex vec = v - v0;
+    return dot(vec, normal) > 0.0f;
 }
 
 void TriangleP::transform(Matrix4f &mat){
@@ -145,7 +148,7 @@ bool TriangleP::traceRay(Ray &ray, float *tHit) {
 }
 
 void TriangleP::setMinDistFromCamera(Vertex &camera){
-    Vertex& distance = v0 - camera;
+    Vertex distance = v0 - camera;
     minDistFromCamera = distance.length();
     distance = v1 - camera;
     minDistFromCamera = std::min(distance.length(), minDistFromCamera);
