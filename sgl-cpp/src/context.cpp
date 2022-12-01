@@ -70,7 +70,7 @@ Primitive* Context::findFirstIntersection(Ray &ray, float &t){
 
 	Primitive* ret = nullptr;
 
-	for (int i = 0; i < primitiveList.size(); i++)
+	for (size_t i = 0; i < primitiveList.size(); i++)
 	{
 		float currentT = -1;
 		bool hit = primitiveList[i]->traceRay(ray, &currentT);

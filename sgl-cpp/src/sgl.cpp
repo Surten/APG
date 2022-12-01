@@ -914,7 +914,8 @@ Color myRayTrace(Ray inRay, int depth, float coeficient){
   for(auto light : ConActive->pointLightList){
     Vertex lightDir(light.position - positionHit);
     lightDir.normalize();
-    Ray shadowRay(positionHit + (normal*0.01f), lightDir, 0.001f, INFINITY);
+    Vertex shadowRayPos = positionHit + (normal*0.01f);
+    Ray shadowRay(shadowRayPos, lightDir, 0.001f, INFINITY);
     if(traceShadowRay(shadowRay, light))  
       retColor += currentPrimitive->getColorFromLightSource(light, positionHit, lookDir) * coeficient;
   }
@@ -965,17 +966,14 @@ void sglRayTraceScene() {
     }
   }*/
 
-  //using std::thread;
-  //auto threadFun = [&](int threadNum, int start, int chunkSize){
+  using std::thread;
+  auto threadFun = [&](int threadNum, int start, int chunkSize){
 
   // iterate over pixels in screen
   //#pragma omp parallel for schedule(static)
  // bool found = false;
     for (int y = 0/*start*/; y < width/*start + chunkSize*/; y++){
       for (int x = 0; x < height; x++){
-        // if((y == 270 && x== 399)) found = true;
-        // if(!found) 
-        // continue;
 
         
 
@@ -987,36 +985,26 @@ void sglRayTraceScene() {
 
         Ray ray(cameraPosition, direction, near, INFINITY);
         Color c = myRayTrace(ray, 0, 1.0f);
-
-
-        // if(x > (float)height/4.0f && x < (float)height /2.0f && y > (float)width/4.0f && y < (float)width*1.0f /2.0f && c.r <= 0.01 && c.g <= 0.01 && c.b <= 0.01){
-        //   printf("%d %d \n", y, x);
-        //   c.r = 1; 
-        // }
-
-        // if(y == 270 && x== 399){
-        //  c.r = 1; c.g = 0; c.b = 0;
-        // }
-
-        rasterizer.FragmentShader(SCVertex(y, x, 0), c);
+        SCVertex scVert(y, x, 0);
+        rasterizer.FragmentShader(scVert, c);
 
       }
     }
-  //};
-  // const auto processor_count = std::max(thread::hardware_concurrency(), 1u);
-  // std::vector<thread> threadPool;
-  // for (unsigned int i = 0; i < processor_count; i++)
-  // {
-  //   int chunkSize = width / processor_count;
-  //   int start = chunkSize * i;
-  //   if (i == processor_count -  1){
-  //     chunkSize = width - ((processor_count - 1) * chunkSize); // padding if the processor count is not factor of width
-  //   }
-  //   threadPool.push_back(thread(threadFun, i, start, chunkSize));
-  // }
-  // for (auto &t : threadPool){
-  //   t.join();
-  // }
+  };
+  const auto processor_count = std::max(thread::hardware_concurrency(), 1u);
+  std::vector<thread> threadPool;
+  for (unsigned int i = 0; i < processor_count; i++)
+  {
+    int chunkSize = width / processor_count;
+    int start = chunkSize * i;
+    if (i == processor_count -  1){
+      chunkSize = width - ((processor_count - 1) * chunkSize); // padding if the processor count is not factor of width
+    }
+    threadPool.push_back(thread(threadFun, i, start, chunkSize));
+  }
+  for (auto &t : threadPool){
+    t.join();
+  }
 
   // drawAxis();
 }
