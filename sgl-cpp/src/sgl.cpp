@@ -13,6 +13,8 @@
 #include "Ray.h"
 #include "Primitive.h"
 
+#include "string.h" // memcpy
+
 #include <omp.h>
 #include <thread>
 
@@ -900,9 +902,9 @@ Color myRayTrace(Ray inRay, int depth, float coeficient){
       int v = static_cast<int>(ConActive->envMapHeight - ConActive->envMapHeight * (.5f + r * dy));
       int uvIndex = v * ConActive->envMapWidth + u;
       float *envBufferAtUV = &ConActive->envMap[3 * uvIndex];
-      retColor.r = *(envBufferAtUV + 0);
-      retColor.g = *(envBufferAtUV + 1);
-      retColor.b = *(envBufferAtUV + 2);
+      retColor.r = *(envBufferAtUV + 0) * coeficient;
+      retColor.g = *(envBufferAtUV + 1) * coeficient;
+      retColor.b = *(envBufferAtUV + 2) * coeficient;
       return retColor;
     }
 

@@ -99,7 +99,6 @@ void Context::setPointlightsForEmissiveTriangle(TriangleP &triangle){
 
 	Vertex normalOffset = triangle.normal * .1f; // to prevent z-fighting
 
-	Vertex points[] = {triangle.v0, triangle.v1, triangle.v2};
 
 
 	
