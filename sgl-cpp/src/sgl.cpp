@@ -19,6 +19,7 @@
 #include <cmath>
 
 #define TWO_PI 6.2831853f
+#define PI 3.1415926535f
 
 Context* ConActive = nullptr;
 std::vector<Context*> ContextArray;
@@ -817,6 +818,7 @@ void sglMaterial(const float r,
   ConActive->currentMaterial.setProperties(r, g, b,
                                            kd, ks,
                                            shine, T, ior);
+  ConActive->currentMaterial.isEmissive = false;
 }
 
 void sglPointLight(const float x,
@@ -886,6 +888,24 @@ Color myRayTrace(Ray inRay, int depth, float coeficient){
 
   if(currentPrimitive == nullptr || hitT < 0){
     // todo for assignment 5 - insert enviroment map color here
+    if (ConActive->isEnvMapInitialized){
+      Vertex direction = inRay.direction;
+      direction.normalize();
+      float dx = direction.x;
+      float dy = direction.y;
+      float dz = direction.z;
+      float c = sqrtf(dx * dx + dy * dy);
+      float r = (c == 0) ? 0 : acosf(dz) / (2 * c * PI);
+      int u = static_cast<int>(ConActive->envMapWidth  * (.5f + r * dx));
+      int v = static_cast<int>(ConActive->envMapHeight - ConActive->envMapHeight * (.5f + r * dy));
+      int uvIndex = v * ConActive->envMapWidth + u;
+      float *envBufferAtUV = &ConActive->envMap[3 * uvIndex];
+      retColor.r = *(envBufferAtUV + 0);
+      retColor.g = *(envBufferAtUV + 1);
+      retColor.b = *(envBufferAtUV + 2);
+      return retColor;
+    }
+
     retColor.r = ConActive->clearColor[0];
     retColor.g = ConActive->clearColor[1];
     retColor.b = ConActive->clearColor[2];
@@ -972,7 +992,8 @@ void sglRayTraceScene() {
   // iterate over pixels in screen
   //#pragma omp parallel for schedule(static)
  // bool found = false;
-    for (int y = 0/*start*/; y < width/*start + chunkSize*/; y++){
+    // for (int y = 0; y < width/; y++){
+    for (int y = start; y <start + chunkSize; y++){
       for (int x = 0; x < height; x++){
 
         
@@ -992,6 +1013,7 @@ void sglRayTraceScene() {
     }
   };
   const auto processor_count = std::max(thread::hardware_concurrency(), 1u);
+  // const auto processor_count = 1;  // single thread for debugging purposes
   std::vector<thread> threadPool;
   for (unsigned int i = 0; i < processor_count; i++)
   {
@@ -1014,7 +1036,13 @@ void sglRasterizeScene() {}
 void sglEnvironmentMap(const int width,
                        const int height,
                        float *texels)
-{}
+{
+  ConActive->envMapWidth = width;
+  ConActive->envMapHeight = height;
+  ConActive->envMap = new float[width * height * 3];
+  memcpy(ConActive->envMap, texels, width * height * 3 * sizeof(float));
+  ConActive->isEnvMapInitialized = true;
+}
 
 void sglEmissiveMaterial(const float r,
                          const float g,
@@ -1022,4 +1050,7 @@ void sglEmissiveMaterial(const float r,
                          const float c0,
                          const float c1,
                          const float c2)
-{}
+{
+  ConActive->currentMaterial.setEmissiveProperties(r, g, b, c0, c1, c2);
+  ConActive->currentMaterial.isEmissive = true;
+}

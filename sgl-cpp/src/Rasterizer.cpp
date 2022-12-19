@@ -368,6 +368,9 @@ void Rasterizer::vboToPrimitives(){
                 TriangleP* tri = new TriangleP{vbo[i], vbo[i+1], vbo[i+2], Con->currentMaterial};
                 //TriangleP* tri2 = new TriangleP{vbo[i], vbo[i+2], vbo[i+1], Con->currentMaterial};
                 Con->primitiveList.push_back(tri);
+                if (Con->currentMaterial.isEmissive){
+                    Con->setPointlightsForEmissiveTriangle(*tri);
+                }
                 //Con->primitiveList.push_back(tri2);
             }
             break;
@@ -381,6 +384,9 @@ void Rasterizer::vboToPrimitives(){
                 TriangleP* tri = new TriangleP{first, second, third, Con->currentMaterial};
                 //TriangleP* tri2 = new TriangleP{first, third, second, Con->currentMaterial};
                 Con->primitiveList.push_back(tri);
+                if (Con->currentMaterial.isEmissive){
+                    Con->setPointlightsForEmissiveTriangle(*tri);
+                }
                 //Con->primitiveList.push_back(tri2);
             }
             break;

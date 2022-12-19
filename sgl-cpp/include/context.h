@@ -33,6 +33,11 @@ public:
 	int pointSize = 1;
 	sglEAreaMode areaMode = SGL_FILL;
 
+	bool isEnvMapInitialized = false;
+	int envMapWidth = 0;
+	int envMapHeight = 0;
+	float* envMap = nullptr;
+
 	MatrixLinkedList modelViewStack;
 	MatrixLinkedList projectionStack;
 
@@ -74,6 +79,7 @@ public:
 
 	void discardPrimitives();
 	Primitive* findFirstIntersection(Ray &ray, float &t);
+	void setPointlightsForEmissiveTriangle(TriangleP &triangle);
 
 };
 

@@ -3,17 +3,34 @@
 
 Color Primitive::getColorFromLightSource(PointLight &light, Vertex &position, Vertex &lookDirection){
     Color color{.0f, .0f, .0f};
+
+    if (material.isEmissive){
+        color = material.color;
+        return color;    
+    }
+
     Vertex normal = normalAt(position);
+
+    Color lightColor = light.color;
+    if (light.useAttenuation){
+        float distance = (light.position - position).length();
+        float atten = (light.c0 + light.c1 * distance + light.c2 * distance * distance);
+        Vertex invRayDirection = (position - light.position);
+        invRayDirection.normalize();
+        float normRayDot = dot(light.triangleNormal, invRayDirection);
+        float weight = light.triangleArea * normRayDot / (AREA_LIGHT_NUM_SAMPLES * atten);
+        lightColor = lightColor * weight;
+    }
 
     Vertex L = light.position - position;  // light direction
     L.normalize();
     float cosA = dot(L, normal);
-    color += light.color * (material.color * material.kd) * std::max(cosA, 0.0f);
+    color += lightColor * (material.color * material.kd) * std::max(cosA, 0.0f);
     // specular
     Vertex R = 2 * dot(L, normal) * normal - L; // reflected
     R.normalize();
     float cosB = dot(lookDirection, R);
-    color += light.color  * material.ks * powf(std::max(cosB, 0.0f), material.shine);
+    color += lightColor  * material.ks * powf(std::max(cosB, 0.0f), material.shine);
 
     return color;
 }

@@ -11,6 +11,9 @@ public:
     float T;
     float ior;
 
+    bool isEmissive = false;
+    float c0, c1, c2;
+
     Material(){
         color.r = color.g = color.b = kd = ks = shine = T = ior = 0;
     }
@@ -38,6 +41,10 @@ public:
         shine = m.shine;
         T = m.T;
         ior = m.ior;
+        isEmissive = m.isEmissive;
+        c0 = m.c0;
+        c1 = m.c1;
+        c2 = m.c2;
     }
 
     void setProperties(float r, float g,  float b, float kd, float ks, float shine, float T, float ior){
@@ -49,6 +56,15 @@ public:
         this->shine = shine;
         this->T = T;
         this->ior = ior;
+    }
+
+    void setEmissiveProperties(float r, float g,  float b, float c0, float c1, float c2){
+        color.r = r;
+        color.g = g;
+        color.b = b;
+        this->c0 = c0;
+        this->c1 = c1;
+        this->c2 = c2;
     }
 };
 

@@ -1,4 +1,5 @@
 #include "context.h"
+#include "cstdlib" // random
 
 Context::Context(int idd, int width, int heigth) : id(idd), frameWidth(width), frameHeight(heigth)
 {
@@ -15,6 +16,7 @@ Context::Context(int idd, int width, int heigth) : id(idd), frameWidth(width), f
 Context::~Context(){
 	delete[] color_buffer;
 	delete[] depth_buffer;
+	if (isEnvMapInitialized) delete[] envMap;
 	discardPrimitives();
 }
 
@@ -86,4 +88,38 @@ Primitive* Context::findFirstIntersection(Ray &ray, float &t){
 	return ret;
 }
 	
+void Context::setPointlightsForEmissiveTriangle(TriangleP &triangle){
+	Vertex &baseVertex = triangle.v0;
 
+	Vertex e1 = (triangle.v1 - triangle.v0);
+	Vertex e2 = (triangle.v2 - triangle.v0);
+	float triangleArea = cross(e1, e2).length() / 2.0f;
+
+	Vertex normal = triangle.normal;
+
+	Vertex normalOffset = triangle.normal * .1f; // to prevent z-fighting
+
+	Vertex points[] = {triangle.v0, triangle.v1, triangle.v2};
+
+
+	
+	for (int i = 0; i < AREA_LIGHT_NUM_SAMPLES; i++) {
+		float r1 = (float)rand()/(float)(RAND_MAX);
+		float r2 = (float)rand()/(float)(RAND_MAX);
+		float u = 1.0f - sqrtf(r1);
+		float v = (1.0f - r2) * sqrt(r1);
+		Vertex point = baseVertex 
+						+ e1 * u 
+						+ e2 * v
+						+ normalOffset;
+
+		Color color{currentMaterial.color};	
+		Vertex position{point};
+		PointLight light{position, color, 
+			currentMaterial.c0, currentMaterial.c1, currentMaterial.c2,
+			triangleArea, normal};
+		pointLightList.push_back(light);
+	}
+
+	
+}

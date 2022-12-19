@@ -3,6 +3,8 @@
 
 #include "VBO.h"
 
+#define AREA_LIGHT_NUM_SAMPLES 16
+
 struct Color{
     float r, g, b;
 
@@ -37,8 +39,21 @@ public:
     Vertex position;
     Color color;
 
+    // used for area lights
+    bool useAttenuation = false;
+    float c0, c1, c2; // constant, linear, quadratic attenuation coeficients
+    float triangleArea;
+    Vertex triangleNormal;
+
     PointLight(Vertex &position, Color &color):
         position(position), color(color){}
+
+    PointLight(Vertex &position, Color &color, float c0, float c1, float c2, float triangleArea, Vertex triangleNormal):
+        position(position), color(color),
+        c0(c0), c1(c1), c2(c2),
+        triangleArea(triangleArea), triangleNormal(triangleNormal){
+            useAttenuation = true;
+        }
 };
 
 
